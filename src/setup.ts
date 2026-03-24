@@ -361,7 +361,8 @@ function getClaudeDesktopConfigPath(): string | null {
 
 function commandExists(cmd: string): boolean {
   try {
-    execSync(`which ${cmd} 2>/dev/null`, { stdio: "ignore" });
+    const check = process.platform === "win32" ? `where ${cmd}` : `which ${cmd}`;
+    execSync(check, { stdio: "ignore" });
     return true;
   } catch {
     return false;
