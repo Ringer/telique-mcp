@@ -156,6 +156,32 @@ function detectMcpClients(): McpClient[] {
     });
   }
 
+  // Codex CLI
+  if (commandExists("codex")) {
+    clients.push({
+      name: "Codex CLI",
+      register: (token) => registerCodex(token),
+    });
+  }
+
+  // ChatGPT Desktop (UI-only — detect but provide instructions)
+  if (isChatGptDesktopInstalled()) {
+    clients.push({
+      name: "ChatGPT Desktop (manual)",
+      register: (token) => {
+        console.log("\n  ChatGPT Desktop requires manual setup:");
+        console.log("  1. Open ChatGPT Desktop → Settings → Developer Mode");
+        console.log("  2. Add a new MCP server with:");
+        console.log(`     Command: npx`);
+        console.log(`     Args: -y telique-mcp`);
+        if (token) {
+          console.log(`     Env: TELIQUE_API_TOKEN=${token}`);
+        }
+        return true;
+      },
+    });
+  }
+
   return clients;
 }
 
@@ -179,6 +205,39 @@ function registerClaudeCode(token: string | null): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+function registerCodex(token: string | null): boolean {
+  try {
+    // Remove existing entry first
+    try {
+      execFileSync("codex", ["mcp", "remove", "telique"], { stdio: "ignore" });
+    } catch {
+      // ignore
+    }
+
+    const args = ["mcp", "add", "telique"];
+    if (token) {
+      args.push("--env", `TELIQUE_API_TOKEN=${token}`);
+    }
+    args.push("--", "npx", "-y", "telique-mcp");
+    execFileSync("codex", args, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isChatGptDesktopInstalled(): boolean {
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  switch (process.platform) {
+    case "darwin":
+      return existsSync(`${home}/Library/Application Support/com.openai.chat`);
+    case "win32":
+      return existsSync(`${process.env.LOCALAPPDATA}/Programs/ChatGPT`);
+    default:
+      return false;
   }
 }
 
