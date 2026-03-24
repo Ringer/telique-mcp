@@ -1,17 +1,26 @@
 #!/usr/bin/env node
-import { stdin } from "node:process";
 
 const subcommand = process.argv[2];
 
-// If run with "setup" arg, or directly in a terminal (not piped by an MCP client),
-// launch the interactive setup flow.
-const isInteractiveTerminal = subcommand !== "serve" && stdin.isTTY === true;
-
-if (subcommand === "setup" || isInteractiveTerminal) {
+if (subcommand === "setup") {
+  // Explicit setup command
   const { runSetup } = await import("./setup.js");
   await runSetup();
+} else if (!subcommand && process.stdin.isTTY && !process.env.MCP_CLIENT) {
+  // No args + interactive terminal + not spawned by an MCP client.
+  // Show a short help message pointing to setup.
+  console.log(`
+  telique-mcp v${(await import("./version.js")).VERSION}
+
+  Usage:
+    telique-mcp setup    Interactive setup wizard
+    telique-mcp          MCP server (stdio) — used by MCP clients
+
+  Run 'telique-mcp setup' to configure your API key and register
+  with your MCP clients (Claude, Cursor, Copilot, Codex, ChatGPT).
+`);
 } else {
-  // MCP server mode — stdin is piped JSON-RPC from the MCP client
+  // MCP server mode — default when spawned by an MCP client
   const { McpServer } = await import(
     "@modelcontextprotocol/sdk/server/mcp.js"
   );
