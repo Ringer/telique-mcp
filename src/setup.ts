@@ -164,6 +164,15 @@ function detectMcpClients(): McpClient[] {
     });
   }
 
+  // GitHub Copilot (VS Code)
+  const vscodeSettingsPath = getVsCodeSettingsPath();
+  if (vscodeSettingsPath && existsSync(vscodeSettingsPath)) {
+    clients.push({
+      name: "GitHub Copilot (VS Code)",
+      register: (token) => registerCopilot(vscodeSettingsPath, token),
+    });
+  }
+
   // ChatGPT Desktop (UI-only — detect but provide instructions)
   if (isChatGptDesktopInstalled()) {
     clients.push({
@@ -223,6 +232,54 @@ function registerCodex(token: string | null): boolean {
     }
     args.push("--", "npx", "-y", "telique-mcp");
     execFileSync("codex", args, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getVsCodeSettingsPath(): string | null {
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  switch (process.platform) {
+    case "darwin":
+      return `${home}/Library/Application Support/Code/User/settings.json`;
+    case "win32":
+      return `${process.env.APPDATA}/Code/User/settings.json`;
+    case "linux":
+      return `${home}/.config/Code/User/settings.json`;
+    default:
+      return null;
+  }
+}
+
+function registerCopilot(
+  settingsPath: string,
+  token: string | null
+): boolean {
+  try {
+    let settings: Record<string, unknown> = {};
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+    } catch {
+      // start fresh
+    }
+
+    const key = "github.copilot.chat.mcp.servers";
+    if (!settings[key] || typeof settings[key] !== "object") {
+      settings[key] = {};
+    }
+
+    const servers = settings[key] as Record<string, unknown>;
+    const entry: Record<string, unknown> = {
+      command: "npx",
+      args: ["-y", "telique-mcp"],
+    };
+    if (token) {
+      entry.env = { TELIQUE_API_TOKEN: token };
+    }
+    servers.telique = entry;
+
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
     return true;
   } catch {
     return false;
