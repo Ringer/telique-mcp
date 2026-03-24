@@ -35,18 +35,32 @@ if (subcommand === "setup") {
   const { registerCnamTools } = await import("./tools/cnam.js");
   const { registerLergTools } = await import("./tools/lerg.js");
   const { registerGraphqlTools } = await import("./tools/graphql.js");
-  const { registerKnowledge } = await import("./knowledge.js");
+  const { registerKnowledge, TELIQUE_KNOWLEDGE } = await import(
+    "./knowledge.js"
+  );
   const { registerCompositeTools } = await import("./tools/composite.js");
+  const { ICONS } = await import("./icons.js");
+  const { VERSION } = await import("./version.js");
 
   const config = loadConfig();
   const client = new TeliqueClient(config);
 
   setAnonymousMode(client.isAnonymous);
 
-  const server = new McpServer({
-    name: "telique",
-    version: "1.0.0",
-  });
+  const server = new McpServer(
+    {
+      name: "telique",
+      version: VERSION,
+      title: "Telique",
+      description:
+        "Telecom data APIs — LRN, CNAM, DNO, LERG (27 tables), RouteLink toll-free routing, and LSMS/LERG GraphQL",
+      icons: ICONS,
+      websiteUrl: "https://telique.ringer.tel",
+    },
+    {
+      instructions: TELIQUE_KNOWLEDGE,
+    }
+  );
 
   registerRoutelinkTools(server, client);
   registerLrnTools(server, client);
