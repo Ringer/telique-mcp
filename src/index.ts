@@ -35,6 +35,7 @@ if (subcommand === "setup") {
   const { registerCnamTools } = await import("./tools/cnam.js");
   const { registerLergTools } = await import("./tools/lerg.js");
   const { registerGraphqlTools } = await import("./tools/graphql.js");
+  const { registerKnowledge } = await import("./knowledge.js");
   const { registerCompositeTools } = await import("./tools/composite.js");
 
   const config = loadConfig();
@@ -53,6 +54,7 @@ if (subcommand === "setup") {
   registerLergTools(server, client);
   registerGraphqlTools(server, client);
   registerCompositeTools(server, client);
+  registerKnowledge(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
