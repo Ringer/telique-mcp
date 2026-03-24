@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import { execSync, execFileSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 import { CONFIG_DIR, CONFIG_FILE } from "./config.js";
+import { ICON_DARK_DATA_URI } from "./icons.js";
 
 const REGISTER_URL = "https://telique.ringer.tel/register";
 const API_BASE_URL = "https://api-dev.ringer.tel";
@@ -333,6 +334,7 @@ function registerJsonConfig(
     const entry: Record<string, unknown> = {
       command: "npx",
       args: ["-y", "telique-mcp"],
+      icon: ICON_DARK_DATA_URI,
     };
     if (token) {
       entry.env = { TELIQUE_API_TOKEN: token };

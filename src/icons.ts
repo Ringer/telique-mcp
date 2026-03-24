@@ -10,6 +10,10 @@ function toDataUri(svg: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
+// Export individual data URIs for use in client config files
+export const ICON_LIGHT_DATA_URI = toDataUri(LIGHT_SVG);
+export const ICON_DARK_DATA_URI = toDataUri(DARK_SVG);
+
 export const ICONS = [
   {
     src: toDataUri(LIGHT_SVG),
