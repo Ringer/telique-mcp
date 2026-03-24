@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
+import { execSync, execFileSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 import { CONFIG_DIR, CONFIG_FILE } from "./config.js";
 
@@ -15,12 +16,10 @@ export async function runSetup(): Promise<void> {
   const existing = loadExistingToken();
   if (existing) {
     console.log(`  Found existing API key: ${maskToken(existing)}`);
-    const keep = await rl.question(
-      "  Keep this key? (Y/n): "
-    );
+    const keep = await rl.question("  Keep this key? (Y/n): ");
     if (keep.toLowerCase() !== "n") {
-      console.log("\n  ✓ Keeping existing configuration.\n");
-      printMcpConfig(existing);
+      console.log("\n  ✓ Keeping existing configuration.");
+      await registerWithClients(rl, existing);
       rl.close();
       return;
     }
@@ -57,8 +56,8 @@ export async function runSetup(): Promise<void> {
 
       saveToken(trimmed);
       console.log(`  ✓ Token validated`);
-      console.log(`  ✓ Saved to ${CONFIG_FILE}\n`);
-      printMcpConfig(trimmed);
+      console.log(`  ✓ Saved to ${CONFIG_FILE}`);
+      await registerWithClients(rl, trimmed);
       break;
     }
 
@@ -66,25 +65,177 @@ export async function runSetup(): Promise<void> {
       console.log(`\n  Opening ${REGISTER_URL} ...\n`);
       await openBrowser(REGISTER_URL);
       console.log(
-        "  After creating your account, run this command again with your API key.\n"
+        "  After creating your account, run `telique-mcp setup` again.\n"
       );
       break;
     }
 
     case "3":
     default: {
-      console.log(
-        "\n  ✓ Skipped. Running in anonymous mode (10 ops/min)."
-      );
-      console.log(
-        `  Get an API key anytime at ${REGISTER_URL}\n`
-      );
-      printMcpConfig(null);
+      console.log("\n  ✓ Skipped. Running in anonymous mode (10 ops/min).");
+      console.log(`  Get an API key anytime at ${REGISTER_URL}`);
+      await registerWithClients(rl, null);
       break;
     }
   }
 
   rl.close();
+}
+
+async function registerWithClients(
+  rl: ReturnType<typeof createInterface>,
+  token: string | null
+): Promise<void> {
+  const clients = detectMcpClients();
+
+  if (clients.length === 0) {
+    console.log("\n  No supported MCP clients detected.\n");
+    printManualConfig(token);
+    return;
+  }
+
+  console.log("\n  Detected MCP clients:\n");
+  clients.forEach((c, i) => console.log(`  [${i + 1}] ${c.name}`));
+  console.log(`  [A] All of the above`);
+  console.log(`  [S] Skip — I'll configure manually`);
+  console.log();
+
+  const answer = await rl.question("  Register with which client? > ");
+  const trimmed = answer.trim().toUpperCase();
+
+  if (trimmed === "S") {
+    printManualConfig(token);
+    return;
+  }
+
+  const selected =
+    trimmed === "A"
+      ? clients
+      : clients.filter((_, i) => trimmed === String(i + 1));
+
+  if (selected.length === 0) {
+    printManualConfig(token);
+    return;
+  }
+
+  for (const client of selected) {
+    const success = client.register(token);
+    if (success) {
+      console.log(`  ✓ Registered with ${client.name}`);
+    } else {
+      console.log(`  ✗ Failed to register with ${client.name}`);
+    }
+  }
+
+  console.log("\n  Done! Restart your MCP client to load the Telique tools.\n");
+}
+
+interface McpClient {
+  name: string;
+  register: (token: string | null) => boolean;
+}
+
+function detectMcpClients(): McpClient[] {
+  const clients: McpClient[] = [];
+
+  // Claude Code
+  if (commandExists("claude")) {
+    clients.push({
+      name: "Claude Code",
+      register: (token) => registerClaudeCode(token),
+    });
+  }
+
+  // Claude Desktop
+  const claudeDesktopConfig = getClaudeDesktopConfigPath();
+  if (claudeDesktopConfig && existsSync(claudeDesktopConfig)) {
+    clients.push({
+      name: "Claude Desktop",
+      register: (token) =>
+        registerJsonConfig(claudeDesktopConfig, token),
+    });
+  }
+
+  return clients;
+}
+
+function registerClaudeCode(token: string | null): boolean {
+  try {
+    // Remove existing entry first (ignore errors if not found)
+    try {
+      execSync("claude mcp remove -s user telique 2>/dev/null", {
+        stdio: "ignore",
+      });
+    } catch {
+      // ignore
+    }
+
+    const args = ["mcp", "add", "-s", "user", "telique"];
+    if (token) {
+      args.push("-e", `TELIQUE_API_TOKEN=${token}`);
+    }
+    args.push("--", "npx", "-y", "telique-mcp");
+    execFileSync("claude", args, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function registerJsonConfig(
+  configPath: string,
+  token: string | null
+): boolean {
+  try {
+    let config: Record<string, unknown> = {};
+    try {
+      config = JSON.parse(readFileSync(configPath, "utf-8"));
+    } catch {
+      // start fresh
+    }
+
+    if (!config.mcpServers || typeof config.mcpServers !== "object") {
+      config.mcpServers = {};
+    }
+
+    const servers = config.mcpServers as Record<string, unknown>;
+    const entry: Record<string, unknown> = {
+      command: "npx",
+      args: ["-y", "telique-mcp"],
+    };
+    if (token) {
+      entry.env = { TELIQUE_API_TOKEN: token };
+    }
+    servers.telique = entry;
+
+    writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getClaudeDesktopConfigPath(): string | null {
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  switch (process.platform) {
+    case "darwin":
+      return `${home}/Library/Application Support/Claude/claude_desktop_config.json`;
+    case "win32":
+      return `${process.env.APPDATA}/Claude/claude_desktop_config.json`;
+    case "linux":
+      return `${home}/.config/Claude/claude_desktop_config.json`;
+    default:
+      return null;
+  }
+}
+
+function commandExists(cmd: string): boolean {
+  try {
+    execSync(`which ${cmd} 2>/dev/null`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function loadExistingToken(): string | null {
@@ -99,11 +250,11 @@ function loadExistingToken(): string | null {
 
 function saveToken(token: string): void {
   mkdirSync(CONFIG_DIR, { recursive: true });
-  const config = existsSync(CONFIG_FILE)
+  const existing = existsSync(CONFIG_FILE)
     ? JSON.parse(readFileSync(CONFIG_FILE, "utf-8"))
     : {};
-  config.apiToken = token;
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + "\n");
+  existing.apiToken = token;
+  writeFileSync(CONFIG_FILE, JSON.stringify(existing, null, 2) + "\n");
 }
 
 async function validateToken(token: string): Promise<boolean> {
@@ -134,7 +285,7 @@ async function openBrowser(url: string): Promise<void> {
   exec(`${cmd} ${url}`);
 }
 
-function printMcpConfig(token: string | null): void {
+function printManualConfig(token: string | null): void {
   const env: Record<string, string> = {};
   if (token) {
     env.TELIQUE_API_TOKEN = token;
@@ -150,7 +301,7 @@ function printMcpConfig(token: string | null): void {
     },
   };
 
-  console.log("  Add this to your MCP client configuration:\n");
+  console.log("\n  Add this to your MCP client configuration:\n");
   console.log(
     JSON.stringify(config, null, 2)
       .split("\n")
