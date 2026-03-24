@@ -62,7 +62,7 @@ export function registerLergTools(
 
   server.tool(
     "lerg_query",
-    "Query any LERG table by field values. Common queries: carrier by OCN (lerg_1, fields: ocn_num,ocn_name,ocn_state), NPA-NXX info (lerg_6, fields: npa,nxx,loc_name,ocn,switch,lata), switch details (lerg_7, fields: switch,ocn,aocn), LRN registry (lerg_12, fields: lrn,lata,switch,ocn). Filter format: field=value, multiple filters separated by /.",
+    "Query any LERG table by field values. Common queries: carrier by OCN (lerg_1, fields: ocn_num,ocn_name,ocn_state), NPA-NXX info (lerg_6, fields: npa,nxx,loc_name,ocn,switch,lata), switch details (lerg_7, fields: switch,ocn,aocn), LRN registry (lerg_12, fields: lrn,lata,switch,ocn). Filter format: field=value, multiple filters joined with & (e.g. npa=303&nxx=629).",
     {
       table_name: z.string().describe("Table to query (e.g. lerg_1, lerg_6)"),
       fields: z
@@ -73,7 +73,7 @@ export function registerLergTools(
       query: z
         .string()
         .describe(
-          "Filter in field=value format, multiple filters separated by / (e.g. ocn_state=CO or npa=303/nxx=629)"
+          "Filter in field=value format, multiple filters joined with & (e.g. ocn_state=CO or npa=303&nxx=629)"
         ),
       limit: z
         .number()
@@ -90,8 +90,10 @@ export function registerLergTools(
         .describe("Pagination offset (default 0)"),
     },
     async ({ table_name, fields, query, limit, offset }) => {
+      // Encode & as %26 so multi-filters stay in the path segment
+      const encodedQuery = query.replace(/&/g, "%26");
       const result = await client.get(
-        `/v1/telique/lerg/${table_name}/${fields}/${query}`,
+        `/v1/telique/lerg/${table_name}/${fields}/${encodedQuery}`,
         { limit, offset }
       );
       return formatResponse(result);

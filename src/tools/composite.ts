@@ -32,7 +32,7 @@ export function registerCompositeTools(
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
           .get(
-            `/v1/telique/lerg/lerg_6/npa,nxx,loc_name,loc_state,lata,lata_name,ocn,switch,rc_abbre,rc_type/npa=${npa}/nxx=${nxx}`,
+            `/v1/telique/lerg/lerg_6/npa,nxx,loc_name,loc_state,lata,lata_name,ocn,switch,rc_abbre,rc_type/npa=${npa}%26nxx=${nxx}`,
             { limit: 5 }
           )
           .catch((err: Error) => ({ _error: true, message: err.message })),
