@@ -1,5 +1,15 @@
 const MAX_ITEMS = 50;
 
+const ANONYMOUS_NOTICE =
+  "\n\n---\n⚠ Anonymous mode (10 ops/min). Run `npx telique-mcp setup` or visit https://telique.ringer.tel for unlimited access.";
+
+let anonymous = false;
+let noticeShown = false;
+
+export function setAnonymousMode(isAnonymous: boolean): void {
+  anonymous = isAnonymous;
+}
+
 interface ErrorResponse {
   _error: true;
   status: number;
@@ -34,8 +44,15 @@ export function formatResponse(data: unknown): {
   }
 
   const truncated = truncateArrays(data);
+  let text = JSON.stringify(truncated, null, 2);
+
+  if (anonymous && !noticeShown) {
+    text += ANONYMOUS_NOTICE;
+    noticeShown = true;
+  }
+
   return {
-    content: [{ type: "text", text: JSON.stringify(truncated, null, 2) }],
+    content: [{ type: "text", text }],
   };
 }
 

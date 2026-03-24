@@ -2,8 +2,12 @@ import type { Config } from "./config.js";
 
 export class TeliqueClient {
   private baseUrl: string;
-  private apiToken: string;
+  private apiToken: string | null;
   private timeoutMs: number;
+
+  get isAnonymous(): boolean {
+    return this.apiToken === null;
+  }
 
   constructor(config: Config) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
@@ -53,7 +57,7 @@ export class TeliqueClient {
         signal: controller.signal,
         headers: {
           ...((init.headers as Record<string, string>) || {}),
-          "x-api-token": this.apiToken,
+          ...(this.apiToken ? { "x-api-token": this.apiToken } : {}),
           Accept: "application/json",
         },
       });
@@ -106,7 +110,9 @@ export class TeliqueClient {
       case 404:
         return "Not found";
       case 429:
-        return "Rate limit exceeded";
+        return this.apiToken
+          ? "Rate limit exceeded"
+          : "Rate limit exceeded (10 ops/min in anonymous mode). Run `npx telique-mcp setup` or visit https://telique.ringer.tel to get an API key for unlimited access.";
       case 502:
       case 503:
         return "Service temporarily unavailable";
