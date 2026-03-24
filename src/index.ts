@@ -1,12 +1,17 @@
 #!/usr/bin/env node
-import { loadConfig } from "./config.js";
+import { stdin } from "node:process";
 
 const subcommand = process.argv[2];
 
-if (subcommand === "setup") {
+// If run with "setup" arg, or directly in a terminal (not piped by an MCP client),
+// launch the interactive setup flow.
+const isInteractiveTerminal = subcommand !== "serve" && stdin.isTTY === true;
+
+if (subcommand === "setup" || isInteractiveTerminal) {
   const { runSetup } = await import("./setup.js");
   await runSetup();
 } else {
+  // MCP server mode — stdin is piped JSON-RPC from the MCP client
   const { McpServer } = await import(
     "@modelcontextprotocol/sdk/server/mcp.js"
   );
@@ -14,6 +19,7 @@ if (subcommand === "setup") {
     "@modelcontextprotocol/sdk/server/stdio.js"
   );
   const { TeliqueClient } = await import("./client.js");
+  const { loadConfig } = await import("./config.js");
   const { setAnonymousMode } = await import("./utils/formatting.js");
   const { registerRoutelinkTools } = await import("./tools/routelink.js");
   const { registerLrnTools } = await import("./tools/lrn.js");
