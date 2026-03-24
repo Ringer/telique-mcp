@@ -288,6 +288,7 @@ function registerCopilot(
     const entry: Record<string, unknown> = {
       command: "npx",
       args: ["-y", "telique-mcp"],
+      icon: ICON_DARK_DATA_URI,
     };
     if (token) {
       entry.env = { TELIQUE_API_TOKEN: token };
@@ -430,6 +431,7 @@ function printManualConfig(token: string | null): void {
       telique: {
         command: "npx",
         args: ["-y", "telique-mcp"],
+        icon: ICON_DARK_DATA_URI,
         ...(token ? { env } : {}),
       },
     },
