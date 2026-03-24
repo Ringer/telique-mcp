@@ -152,7 +152,7 @@ function detectMcpClients(): McpClient[] {
     clients.push({
       name: "Claude Desktop",
       register: (token) =>
-        registerJsonConfig(claudeDesktopConfig, token),
+        registerJsonConfig(claudeDesktopConfig, token, "mcpsrv_telique"),
     });
   }
 
@@ -314,7 +314,8 @@ function isChatGptDesktopInstalled(): boolean {
 
 function registerJsonConfig(
   configPath: string,
-  token: string | null
+  token: string | null,
+  serverKey: string = "telique"
 ): boolean {
   try {
     let config: Record<string, unknown> = {};
@@ -336,7 +337,7 @@ function registerJsonConfig(
     if (token) {
       entry.env = { TELIQUE_API_TOKEN: token };
     }
-    servers.telique = entry;
+    servers[serverKey] = entry;
 
     writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
     return true;
