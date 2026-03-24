@@ -156,6 +156,15 @@ function detectMcpClients(): McpClient[] {
     });
   }
 
+  // Cursor
+  const cursorConfig = getCursorConfigPath();
+  if (cursorConfig && existsSync(cursorConfig)) {
+    clients.push({
+      name: "Cursor",
+      register: (token) => registerJsonConfig(cursorConfig, token),
+    });
+  }
+
   // Codex CLI
   if (commandExists("codex")) {
     clients.push({
@@ -236,6 +245,11 @@ function registerCodex(token: string | null): boolean {
   } catch {
     return false;
   }
+}
+
+function getCursorConfigPath(): string | null {
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  return `${home}/.cursor/mcp.json`;
 }
 
 function getVsCodeSettingsPath(): string | null {
