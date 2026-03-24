@@ -6,8 +6,6 @@ import { CONFIG_DIR, CONFIG_FILE } from "./config.js";
 
 const REGISTER_URL = "https://telique.ringer.tel/register";
 const API_BASE_URL = "https://api-dev.ringer.tel";
-// Stable UUID for Claude Desktop config key (derived from our URL)
-const CLAUDE_DESKTOP_SERVER_ID = "5ce1a6ff-302c-51cf-8aa9-0e6a3f7b0834";
 
 export async function runSetup(): Promise<void> {
   const rl = createInterface({ input: stdin, output: stdout });
@@ -154,7 +152,7 @@ function detectMcpClients(): McpClient[] {
     clients.push({
       name: "Claude Desktop",
       register: (token) =>
-        registerJsonConfig(claudeDesktopConfig, token, CLAUDE_DESKTOP_SERVER_ID),
+        registerJsonConfig(claudeDesktopConfig, token),
     });
   }
 
