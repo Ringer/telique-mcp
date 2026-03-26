@@ -11,6 +11,7 @@ export { registerCnamTools } from "./tools/cnam.js";
 export { registerLergTools } from "./tools/lerg.js";
 export { registerGraphqlTools } from "./tools/graphql.js";
 export { registerCompositeTools } from "./tools/composite.js";
+export { registerStatusTools } from "./tools/status.js";
 
 // Knowledge / prompts
 export { registerKnowledge, TELIQUE_KNOWLEDGE } from "./knowledge.js";

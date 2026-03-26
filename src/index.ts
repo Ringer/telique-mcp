@@ -39,6 +39,7 @@ if (subcommand === "setup") {
     "./knowledge.js"
   );
   const { registerCompositeTools } = await import("./tools/composite.js");
+  const { registerStatusTools } = await import("./tools/status.js");
   const { ICONS } = await import("./icons.js");
   const { VERSION } = await import("./version.js");
 
@@ -68,6 +69,7 @@ if (subcommand === "setup") {
   registerLergTools(server, client);
   registerGraphqlTools(server, client);
   registerCompositeTools(server, client);
+  registerStatusTools(server, client);
   registerKnowledge(server);
 
   const transport = new StdioServerTransport();
