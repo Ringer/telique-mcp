@@ -6,7 +6,7 @@ Telique MCP gives AI assistants access to telecom routing data, caller ID lookup
 
 ```bash
 npm install -g telique-mcp
-telique-mcp
+telique-mcp setup
 ```
 
 The setup wizard detects your installed MCP clients and registers automatically.
@@ -19,10 +19,10 @@ The setup wizard detects your installed MCP clients and registers automatically.
 
 ## Setup Wizard
 
-Running `telique-mcp` in your terminal launches the interactive setup:
+Running `telique-mcp setup` in your terminal launches the interactive setup:
 
 ```
-$ telique-mcp
+$ telique-mcp setup
 
   Telique MCP — Setup
 
@@ -72,7 +72,7 @@ If you prefer manual setup or the wizard didn't detect your client, follow the i
 **Automatic (recommended):**
 
 ```bash
-telique-mcp   # select Claude Code when prompted
+telique-mcp setup   # select Claude Code when prompted
 ```
 
 **Manual:**
@@ -94,7 +94,7 @@ Restart Claude Code to load the tools. Verify with `/mcp`.
 **Automatic (recommended):**
 
 ```bash
-telique-mcp   # select Claude Desktop when prompted
+telique-mcp setup   # select Claude Desktop when prompted
 ```
 
 **Manual:**
@@ -132,7 +132,7 @@ Omit the `env` block to use anonymous mode. Restart Claude Desktop.
 **Automatic (recommended):**
 
 ```bash
-telique-mcp   # select Cursor when prompted
+telique-mcp setup   # select Cursor when prompted
 ```
 
 **Manual:**
@@ -162,7 +162,7 @@ Omit the `env` block to use anonymous mode. Restart Cursor.
 **Automatic (recommended):**
 
 ```bash
-telique-mcp   # select GitHub Copilot when prompted
+telique-mcp setup   # select GitHub Copilot when prompted
 ```
 
 **Manual:**
@@ -200,7 +200,7 @@ Omit the `env` block to use anonymous mode. Reload VS Code.
 **Automatic (recommended):**
 
 ```bash
-telique-mcp   # select Codex CLI when prompted
+telique-mcp setup   # select Codex CLI when prompted
 ```
 
 **Manual:**
@@ -244,10 +244,8 @@ Telique MCP works without an API key at a rate limit of 10 operations per minute
 Run the setup wizard again to update your key and re-register with your MCP clients:
 
 ```bash
-telique-mcp
+telique-mcp setup
 ```
-
-Or ask your AI assistant: *"Update my Telique API token to [new-key]"* — it can edit the config file directly.
 
 ### Token resolution
 
@@ -284,7 +282,7 @@ Restart your MCP client. Most clients require a restart to pick up new MCP serve
 You're hitting the anonymous rate limit (10 ops/min). Get an API key at [telique.ringer.tel](https://telique.ringer.tel).
 
 **Getting 403 errors?**
-Your API key is invalid or expired. Run `telique-mcp` to update it.
+Your API key is invalid or expired. Run `telique-mcp setup` to update it.
 
 **Server not starting?**
 Ensure Node.js 18+ is installed: `node --version`
