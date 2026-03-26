@@ -291,10 +291,53 @@ Note: dynamicJoin uses snake_case table IDs (lerg_6, lerg_1, lerg_7_sha) and ret
 
 ### LSMS GraphQL (\`service="lsms"\`)
 
-5 tables:
-- subscriptionVersions (514M rows — MUST filter by phone_number, lrn, or spid)
-- numberBlocks, serviceProviders, locationRoutingNumbers, npanxx
-- Safety limits: max 1000 results, depth 5, complexity 200, 10-second timeout
+The LSMS GraphQL API is a **completely separate implementation** from LERG GraphQL. It has different query patterns, different field naming, and different schema design. Do NOT use LERG-style FilterInput syntax with LSMS.
+
+**5 tables:**
+
+| Table | ~Rows | Requires Filter? |
+|-------|-------|------------------|
+| subscriptionVersions | 514M | Yes (phoneNumber, lrn, or spid) |
+| numberBlocks | 751K | Yes (npanxxx, spid, or lrn) |
+| serviceProviders | 5.2K | No |
+| locationRoutingNumbers | 56K | No |
+| npanxx | 192K | No |
+
+**Query patterns (NOT FilterInput — uses typed named parameters):**
+\`\`\`graphql
+# Single phone number lookup
+{ subscriptionVersion(phoneNumber: "3036298301") { phoneNumber lrn spid serviceProvider { name } } }
+
+# Paginated list by LRN (returns totalCount, hasMore)
+{ subscriptionVersionsByLrn(lrn: "7207081999", limit: 10) { totalCount hasMore items { phoneNumber spid } } }
+
+# Paginated list by SPID
+{ subscriptionVersionsBySpid(spid: "567G", limit: 10) { totalCount hasMore items { phoneNumber lrn } } }
+
+# Number block lookup
+{ numberBlock(npanxxx: "3035551") { npanxxx lrn spid serviceProvider { name } } }
+
+# List carriers
+{ serviceProviders(limit: 20) { spid name npacRegion } }
+
+# LRN metadata
+{ locationRoutingNumber(lrn: "7207081999") { lrn ocn switchInfo } }
+
+# NPA-NXX codes for a carrier
+{ npanxxBySpid(spid: "567G", limit: 50) { npa nxx effectiveTimestamp } }
+
+# Database statistics
+{ lsmsStats { activeSubscriptionVersions activeNumberBlocks totalServiceProviders } }
+\`\`\`
+
+**Relationships** (use DataLoader batching — no N+1):
+- subscriptionVersion → \`serviceProvider\`, \`lrnMetadata\`
+- numberBlock → \`serviceProvider\`, \`lrnMetadata\`
+- npanxx → \`serviceProvider\`
+
+**Safety limits:** max 1000 results, depth 5, complexity 200, 10-second statement timeout
+**Auto-filters:** Soft-deletable records filter to is_active = true automatically
+**Note:** Phone numbers/LRNs are strings (stored as BIGINT but GraphQL Int is 32-bit). SPIDs are auto-trimmed.
 
 ---
 

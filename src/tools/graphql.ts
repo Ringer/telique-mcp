@@ -9,11 +9,11 @@ export function registerGraphqlTools(
 ): void {
   server.tool(
     "graphql_query",
-    `Execute GraphQL queries against LSMS or LERG databases.
+    `Execute GraphQL queries against LSMS or LERG. These are DISTINCT APIs with different schemas — do not mix their syntax.
 
-LSMS (service='lsms'): Live NPAC porting data. Tables: subscriptionVersions (514M rows — MUST filter by phone_number, lrn, or spid), numberBlocks, serviceProviders, locationRoutingNumbers, npanxx. Safety limits: max 1000 results, depth 5, complexity 200, 10s timeout.
+LSMS (service='lsms'): Live NPAC porting data. Uses named query parameters (NOT FilterInput). Key queries: subscriptionVersion(phoneNumber), subscriptionVersionsByLrn(lrn, limit), subscriptionVersionsBySpid(spid, limit), numberBlock(npanxxx), serviceProviders(limit), locationRoutingNumber(lrn), npanxxBySpid(spid, limit), lsmsStats. Relationships: subscriptionVersion→serviceProvider, →lrnMetadata. Safety limits: max 1000 results, 10s timeout. Large tables (subscriptionVersions 514M rows) MUST be filtered.
 
-LERG (service='lerg'): Static telecom reference data. All 27 LERG tables with camelCase names (lerg1, lerg6, lerg7Sha, etc.). Supports relationship joins: lerg6→carrier (via OCN→lerg1), lerg6→switchInfo (→lerg7), lerg7Sha→tandemSwitch. Filter operators: EQ, NE, GT, GTE, LT, LTE, LIKE, IN, IS_NULL, IS_NOT_NULL. All field values are nullable strings.`,
+LERG (service='lerg'): Static telecom reference. Uses FilterInput with operators. 27 tables with camelCase names (lerg1, lerg6, lerg7Sha). Return fields MUST be camelCase (ocnName not ocn_name). LIKE patterns MUST be UPPERCASE. Filter syntax: { field: "ocnName", op: LIKE, value: "%VERIZON%" }. IN uses 'values' plural. Relationships: lerg6→carrier, →switchInfo, →homingArrangements. Also supports dynamicJoin for arbitrary cross-table SQL joins.`,
     {
       service: z
         .enum(["lsms", "lerg"])
