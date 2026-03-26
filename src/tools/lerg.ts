@@ -188,13 +188,58 @@ export function registerLergTools(
 
   server.tool(
     "lerg_tandem",
-    "Look up tandem routing information for a given NPA-NXX. Returns the tandem switch and routing path for calls to a specific area code and exchange. Uses SQL JOINs across LERG tables (lerg_6, lerg_7, lerg_7_sha) for comprehensive routing data.",
+    "Look up tandem routing information. Query by NPA+NXX, switch CLLI, tandem CLLI, or carrier name pattern. Returns tandem switch, OCN, LATA, and routing path via SQL JOINs across lerg_6, lerg_7_sha, and lerg_1.",
     {
-      npa: z.string().regex(/^\d{3}$/).describe("3-digit area code (NPA)"),
-      nxx: z.string().regex(/^\d{3}$/).describe("3-digit exchange code (NXX)"),
+      npa: z
+        .string()
+        .regex(/^\d{3}$/)
+        .optional()
+        .describe("3-digit area code (NPA) — use with nxx"),
+      nxx: z
+        .string()
+        .regex(/^\d{3}$/)
+        .optional()
+        .describe("3-digit exchange code (NXX) — use with npa"),
+      switch_clli: z
+        .string()
+        .optional()
+        .describe("Switch CLLI code (e.g. DNVRCOMADS0)"),
+      tandem: z
+        .string()
+        .optional()
+        .describe("Tandem CLLI code — reverse lookup to find what subtends it"),
+      name: z
+        .string()
+        .optional()
+        .describe(
+          "Carrier name pattern with % wildcard (e.g. %VERIZON%). Case-insensitive."
+        ),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(10000)
+        .default(100)
+        .describe("Max results (default 100)"),
+      offset: z
+        .number()
+        .int()
+        .min(0)
+        .default(0)
+        .describe("Pagination offset (default 0)"),
     },
-    async ({ npa, nxx }) => {
-      const result = await client.get("/v1/telique/lerg/tandem", { npa, nxx });
+    async ({ npa, nxx, switch_clli, tandem, name, limit, offset }) => {
+      const params: Record<string, string | number | undefined> = {
+        limit,
+        offset,
+      };
+      if (npa) params.npa = npa;
+      if (nxx) params.nxx = nxx;
+      if (switch_clli) params.switch = switch_clli;
+      if (tandem) params.tandem = tandem;
+      if (name) params.name = name;
+
+      const result = await client.get("/v1/telique/lerg/tandem", params);
       return formatResponse(result);
     }
   );

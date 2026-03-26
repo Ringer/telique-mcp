@@ -143,7 +143,9 @@ For complex queries with JOINs and advanced operators, use \`lerg_complex_query\
 }
 \`\`\`
 
-Filter operators: eq, ne, gt, gte, lt, lte, like, in, isnull, isnotnull.
+Filter operators: eq, ne, gt, gte, lt, lte, like, in, notin, isnull, isnotnull.
+Use \`*\` as the fields value to return all fields from a table.
+Note: REST \`like\` is **case-insensitive** (in-memory matching), unlike GraphQL LIKE which is case-sensitive (PostgreSQL).
 
 ---
 
@@ -221,7 +223,7 @@ Use \`graphql_query\` for complex queries not possible with REST:
 - **Return fields** MUST be camelCase: \`ocnName\`, \`locState\`, \`locName\`, \`shaIndicator\`, \`hTrmDTdm\`
 - **Filter field names** accept BOTH camelCase (\`ocnName\`) and snake_case (\`ocn_name\`)
 - **All values are strings** — even numeric fields. Always quote: \`value: "720"\` not \`value: 720\`
-- **LERG data is stored UPPERCASE** — LIKE patterns must use uppercase: \`%VERIZON%\` not \`%verizon%\`
+- **GraphQL LIKE is case-sensitive (SQL)** — LERG data is stored UPPERCASE, so patterns must be uppercase: \`%VERIZON%\` not \`%verizon%\`. (The REST \`like\` operator is case-insensitive — this only applies to GraphQL.)
 
 **FilterInput:**
 \`\`\`graphql
@@ -287,7 +289,7 @@ Operators: EQ, NE, GT, GTE, LT, LTE, LIKE, IN, IS_NULL, IS_NOT_NULL
   })
 }
 \`\`\`
-Note: dynamicJoin uses snake_case table IDs (lerg_6, lerg_1, lerg_7_sha) and returns raw PostgreSQL column names.
+Note: dynamicJoin uses snake_case table IDs (lerg_6, lerg_1, lerg_7_sha) and returns raw PostgreSQL column names (UPPERCASE with spaces, e.g., \`"OCN_NAME"\`, \`"LOC NAME"\`, \`"EFF DATE"\`), NOT GraphQL camelCase.
 
 ### LSMS GraphQL (\`service="lsms"\`)
 
@@ -371,6 +373,6 @@ The LSMS GraphQL API is a **completely separate implementation** from LERG Graph
 5. **Never query LSMS subscriptionVersions without a filter** — 514M rows will timeout
 6. **Always use the LRN's NPA-NXX** (not the TN's) for LERG routing lookups
 7. **GraphQL return fields must be camelCase** — \`ocnName\` not \`ocn_name\`, \`locState\` not \`loc_state\`
-8. **LIKE patterns must be UPPERCASE** — LERG data is uppercase, so \`%VERIZON%\` works but \`%verizon%\` returns nothing
+8. **GraphQL LIKE patterns must be UPPERCASE** — LERG data is uppercase in PostgreSQL, so \`%VERIZON%\` works but \`%verizon%\` returns nothing. (REST \`like\` is case-insensitive — this only applies to GraphQL.)
 9. **IN operator uses \`values\` (plural)** — \`{ field: "npa", op: IN, values: ["212", "646"] }\` not \`value\`
 `;
