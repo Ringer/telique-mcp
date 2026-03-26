@@ -149,6 +149,66 @@ Note: REST \`like\` is **case-insensitive** (in-memory matching), unlike GraphQL
 
 ---
 
+## LSMS / LRN REST Endpoints
+
+The LRN API serves live NPAC porting data from an in-memory Judy Array store (500M+ records, sub-millisecond) backed by a PostgreSQL LSMS database.
+
+### LRN Lookup (\`lrn_lookup\` tool)
+
+\`GET /v1/telique/lrn/{phone_number}?format=json\`
+
+Returns the current LRN and carrier for a phone number. This is the fastest lookup — served from in-memory store, not PostgreSQL.
+
+**JSON response shape:**
+\`\`\`json
+{
+  "phone_number": "3036298301",
+  "lrn": "7207081999",
+  "status": "success",
+  "timestamp": "2025-08-07T02:30:00Z",
+  "metadata": {
+    "spid": "567G",
+    "lnp_type": "lspp",
+    "activation_timestamp": "2024-01-15T10:30:00Z",
+    "last_updated": "2025-08-07T01:30:00Z"
+  }
+}
+\`\`\`
+
+Default format is plain text (\`LRN;SPID\`, e.g., \`7207081999;567G\`). Use \`?format=json\` for structured response.
+Also available via POST: \`/v1/telique/lrn/lookup\` with JSON body \`{ "phone_number": "...", "format": "json" }\`.
+
+### LSMS Relationship Queries (\`lrn_relationship_query\` tool)
+
+Query relationships between phone numbers, LRNs, and SPIDs from the LSMS PostgreSQL database. These hit the database directly and have higher latency than the in-memory LRN lookup.
+
+**6 query types and their endpoints:**
+
+| query_type | Endpoint | Description |
+|------------|----------|-------------|
+| \`phones_by_lrn\` | \`GET /v1/telique/lsms/list/phone_number?lrn={value}\` | All phone numbers for a given LRN |
+| \`phones_by_spid\` | \`GET /v1/telique/lsms/list/phone_number?spid={value}\` | All phone numbers for a given SPID |
+| \`spid_by_lrn\` | \`GET /v1/telique/lsms/list/spid?lrn={value}\` | All SPIDs associated with a given LRN |
+| \`spid_by_phone\` | \`GET /v1/telique/lsms/list/spid?phone_number={value}\` | All SPIDs for a given phone number |
+| \`lrn_by_spid\` | \`GET /v1/telique/lsms/list/lrn?spid={value}\` | All LRNs for a given SPID |
+| \`lrn_by_phone\` | \`GET /v1/telique/lsms/list/lrn?phone_number={value}\` | All LRNs for a given phone number |
+
+**Constraints:**
+- Exactly ONE query parameter per request (multiple parameters return a validation error)
+- Results are filtered to active records only
+- Phone numbers and LRNs are returned as strings
+
+**Example response (phones_by_lrn):**
+\`\`\`json
+{
+  "phone_numbers": ["3036298301", "3039982743", "3033334444"],
+  "count": 3,
+  "query": { "lrn": "7207081999", "spid": null, "phone_number": null }
+}
+\`\`\`
+
+---
+
 ## CNAM (Caller Name)
 
 \`cnam_lookup\` queries TransUnion's LIDB for the caller name associated with a phone number.
@@ -167,6 +227,7 @@ Note: REST \`like\` is **case-insensitive** (in-memory matching), unlike GraphQL
 - If is_dno=true, the number appearing as caller ID indicates **spoofing/fraud**
 - Supports prefix matching: 3-digit (NPA), 6-digit (NPA-NXX), 7-digit, or 10-digit patterns
 - Response includes: is_dno, matched_pattern, source
+- Phone numbers are auto-normalized: E.164 (+12003456789), domestic (12003456789), and international (0012003456789) formats all accepted
 
 ---
 
@@ -316,20 +377,29 @@ The LSMS GraphQL API is a **completely separate implementation** from LERG Graph
 # Paginated list by SPID
 { subscriptionVersionsBySpid(spid: "567G", limit: 10) { totalCount hasMore items { phoneNumber lrn } } }
 
-# Number block lookup
+# Number block lookup (single)
 { numberBlock(npanxxx: "3035551") { npanxxx lrn spid serviceProvider { name } } }
 
-# List carriers
+# Number blocks by SPID or LRN (paginated — at least one filter required)
+{ numberBlocks(spid: "567G", limit: 10) { totalCount hasMore items { npanxxx lrn spid } } }
+
+# Single carrier lookup (note: composite PK — same SPID may exist in multiple regions)
+{ serviceProvider(spid: "567G") { spid name npacRegion status contactInfo } }
+
+# List carriers (paginated)
 { serviceProviders(limit: 20) { spid name npacRegion } }
 
 # LRN metadata
-{ locationRoutingNumber(lrn: "7207081999") { lrn ocn switchInfo } }
+{ locationRoutingNumber(lrn: "7207081999") { lrn ocn regionId status switchInfo } }
 
-# NPA-NXX codes for a carrier
+# NPA-NXX single lookup
+{ npanxx(npa: "303", nxx: "629") { npa nxx spid effectiveTimestamp serviceProvider { name } } }
+
+# NPA-NXX codes for a carrier (paginated)
 { npanxxBySpid(spid: "567G", limit: 50) { npa nxx effectiveTimestamp } }
 
 # Database statistics
-{ lsmsStats { activeSubscriptionVersions activeNumberBlocks totalServiceProviders } }
+{ lsmsStats { activeSubscriptionVersions activeNumberBlocks totalServiceProviders totalLocationRoutingNumbers activeNpanxx } }
 \`\`\`
 
 **Relationships** (use DataLoader batching — no N+1):
@@ -339,7 +409,8 @@ The LSMS GraphQL API is a **completely separate implementation** from LERG Graph
 
 **Safety limits:** max 1000 results, depth 5, complexity 200, 10-second statement timeout
 **Auto-filters:** Soft-deletable records filter to is_active = true automatically
-**Note:** Phone numbers/LRNs are strings (stored as BIGINT but GraphQL Int is 32-bit). SPIDs are auto-trimmed.
+**Note:** Phone numbers/LRNs are strings (stored as BIGINT but GraphQL Int is 32-bit). SPIDs are auto-trimmed (stored as CHAR(4) with trailing spaces).
+**Note:** Service providers have a composite PK of (spid, npac_region) — the same SPID may appear in multiple NPAC regions.
 
 ---
 
