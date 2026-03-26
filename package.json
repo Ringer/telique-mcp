@@ -1,6 +1,6 @@
 {
   "name": "telique-mcp",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "MCP server for Telique telecom APIs (RouteLink, LRN, CNAM, LERG)",
   "type": "module",
   "main": "dist/index.js",
