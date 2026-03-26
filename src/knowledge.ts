@@ -214,11 +214,84 @@ Use \`graphql_query\` for complex queries not possible with REST:
 - Filtering by fields not in REST endpoints
 - Multiple related data points in one query
 
-**LERG GraphQL** (\`service="lerg"\`): All 27 tables with camelCase names (lerg1, lerg6, lerg7Sha, etc.)
-- FilterInput operators: EQ, NE, GT, GTE, LT, LTE, LIKE, IN, IS_NULL, IS_NOT_NULL
-- All field values are nullable strings
+### LERG GraphQL (\`service="lerg"\`)
 
-**LSMS GraphQL** (\`service="lsms"\`): 5 tables
+**CRITICAL naming rules:**
+- **Query names** are camelCase: \`lerg1\`, \`lerg6\`, \`lerg7Sha\`, \`lerg7ShaIns\`, \`lerg12\`, etc.
+- **Return fields** MUST be camelCase: \`ocnName\`, \`locState\`, \`locName\`, \`shaIndicator\`, \`hTrmDTdm\`
+- **Filter field names** accept BOTH camelCase (\`ocnName\`) and snake_case (\`ocn_name\`)
+- **All values are strings** — even numeric fields. Always quote: \`value: "720"\` not \`value: 720\`
+- **LERG data is stored UPPERCASE** — LIKE patterns must use uppercase: \`%VERIZON%\` not \`%verizon%\`
+
+**FilterInput:**
+\`\`\`graphql
+{ field: "ocnName", op: LIKE, value: "%VERIZON%" }   # partial match (UPPERCASE!)
+{ field: "npa", op: EQ, value: "720" }                # exact match
+{ field: "npa", op: IN, values: ["212", "646", "917"] } # IN uses 'values' (plural), not 'value'
+\`\`\`
+
+Operators: EQ, NE, GT, GTE, LT, LTE, LIKE, IN, IS_NULL, IS_NOT_NULL
+
+**Predefined relationships** (avoid N+1 — use these instead of separate queries):
+- \`lerg6\` → \`carrier\` (joins to lerg1 via OCN), \`switchInfo\` (→ lerg7), \`homingArrangements\` (→ lerg7Sha)
+- \`lerg7\` → \`carrier\` (→ lerg1)
+- \`lerg7Sha\` → \`tandemSwitch\` (→ lerg7)
+
+**Example — find all Verizon OCNs:**
+\`\`\`graphql
+{
+  lerg1(
+    filters: [{ field: "ocnName", op: LIKE, value: "%VERIZON%" }]
+    pagination: { limit: 10 }
+  ) {
+    ocnNum
+    ocnName
+    ocnState
+    category
+  }
+}
+\`\`\`
+
+**Example — NPA-NXX with carrier and switch in one query:**
+\`\`\`graphql
+{
+  lerg6(
+    filters: [{ field: "npa", op: EQ, value: "303" }, { field: "nxx", op: EQ, value: "629" }]
+    pagination: { limit: 1 }
+  ) {
+    npa nxx ocn locName switch
+    carrier { ocnNum ocnName ocnState }
+    switchInfo { switch eqpType swCity swState }
+    homingArrangements {
+      shaIndicator hTrmDTdm
+      tandemSwitch { switch swCity swState }
+    }
+  }
+}
+\`\`\`
+
+**dynamicJoin** — for arbitrary cross-table SQL joins (returns raw JSON):
+\`\`\`graphql
+{
+  dynamicJoin(input: {
+    table: "lerg_6"
+    fields: ["npa", "nxx", "ocn", "locName"]
+    filters: [{ field: "locName", op: LIKE, value: "%DENVER%" }]
+    join: {
+      table: "lerg_1"
+      fields: ["ocnName", "category"]
+      on: [{ leftField: "ocn", rightField: "ocnNum" }]
+      joinType: "INNER"
+    }
+    pagination: { limit: 10 }
+  })
+}
+\`\`\`
+Note: dynamicJoin uses snake_case table IDs (lerg_6, lerg_1, lerg_7_sha) and returns raw PostgreSQL column names.
+
+### LSMS GraphQL (\`service="lsms"\`)
+
+5 tables:
 - subscriptionVersions (514M rows — MUST filter by phone_number, lrn, or spid)
 - numberBlocks, serviceProviders, locationRoutingNumbers, npanxx
 - Safety limits: max 1000 results, depth 5, complexity 200, 10-second timeout
@@ -254,4 +327,7 @@ Use \`graphql_query\` for complex queries not possible with REST:
 4. **Never look for TN-level data in LERG** — LERG has no per-phone-number data
 5. **Never query LSMS subscriptionVersions without a filter** — 514M rows will timeout
 6. **Always use the LRN's NPA-NXX** (not the TN's) for LERG routing lookups
+7. **GraphQL return fields must be camelCase** — \`ocnName\` not \`ocn_name\`, \`locState\` not \`loc_state\`
+8. **LIKE patterns must be UPPERCASE** — LERG data is uppercase, so \`%VERIZON%\` works but \`%verizon%\` returns nothing
+9. **IN operator uses \`values\` (plural)** — \`{ field: "npa", op: IN, values: ["212", "646"] }\` not \`value\`
 `;
