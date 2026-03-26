@@ -90,8 +90,14 @@ Or use \`lookup_tn\` for a quick consolidated view (dips LRN + CNAM + DNO + LERG
 **lerg_6** — NPA-NXX block assignments (the workhorse)
 - Fields: npa, nxx, block_id, lata, lata_name, loc_state, ocn, aocn, switch, sha_indicator, rc_abbre, rc_type, coc_type, eff_date, status
 - Has LATA + state + NPA + NXX + OCN + switch + rate center all on one row.
-- BLOCK="A" = full NXX assignment; numeric 0-9 = thousands-block pooling.
-- Example: \`lerg_query("lerg_6", "npa,nxx,loc_name,loc_state,ocn,switch,lata", "npa=720&nxx=708")\`
+- Example: \`lerg_query("lerg_6", "npa,nxx,block_id,loc_name,loc_state,ocn,switch,lata", "npa=720&nxx=708")\`
+
+**CRITICAL: Understanding block_id and NPA-NXX ownership:**
+- \`block_id="A"\` = the **Code Holder** — the original LERG owner of the entire NPA-NXX. This is THE owner of the NPA-NXX.
+- \`block_id="0"\` through \`"9"\` = **Block Holders** — carriers who received a pooled 1,000-number block (thousands-block pooling). Each block covers numbers x000-x999 within the NXX.
+- When asked "who owns NPA-NXX 720-708?", the answer is the OCN on the \`block_id="A"\` row.
+- A query for \`npa=720&nxx=708\` may return multiple rows — one for block_id="A" (the Code Holder) and additional rows for pooled blocks (0-9). Always filter or identify the "A" row for ownership questions.
+- To find which carrier serves a specific phone number within a pooled NXX, use the LRN dip pattern instead (the block_id approach only tells you who holds the block, not who currently serves an individual ported number).
 
 **lerg_7_sha** — Switch homing arrangements
 - Fields: switch, sha_indicator, h_trm_d_tdm (FGD tandem), host, ocn
@@ -146,6 +152,24 @@ For complex queries with JOINs and advanced operators, use \`lerg_complex_query\
 Filter operators: eq, ne, gt, gte, lt, lte, like, in, notin, isnull, isnotnull.
 Use \`*\` as the fields value to return all fields from a table.
 Note: REST \`like\` is **case-insensitive** (in-memory matching), unlike GraphQL LIKE which is case-sensitive (PostgreSQL).
+
+---
+
+## When to Use REST vs GraphQL
+
+| Use Case | Best Tool | Why |
+|----------|-----------|-----|
+| Single LRN/SPID for a phone number | \`lrn_lookup\` (REST) | Sub-millisecond, in-memory |
+| Carrier name by OCN | \`lerg_query\` (REST) | Simple single-field lookup |
+| NPA-NXX routing info | \`lerg_query\` (REST) | Fast, straightforward |
+| Tandem routing | \`lerg_tandem\` (REST) | Pre-built JOIN, optimized |
+| NPA-NXX + carrier name + switch in one call | \`graphql_query\` (LERG) | Nested relationships avoid multiple round trips |
+| Filter by fields not in REST (e.g., all switches for an OCN) | \`graphql_query\` (LERG) | FilterInput supports any field |
+| Cross-table JOIN with arbitrary conditions | \`graphql_query\` (LERG dynamicJoin) | Only way to do ad-hoc joins |
+| All phone numbers for an LRN (paginated with totalCount) | \`graphql_query\` (LSMS) | SVConnection returns totalCount + hasMore |
+| Quick profile of a phone number | \`lookup_tn\` (composite) | Parallel dip across LRN + CNAM + DNO + LERG |
+
+**Rule of thumb:** Use REST for simple lookups (one table, one or two filters). Use GraphQL when you need joins, relationship traversal, or fields not exposed by REST endpoints.
 
 ---
 
@@ -232,6 +256,10 @@ Query relationships between phone numbers, LRNs, and SPIDs from the LSMS Postgre
 ---
 
 ## RouteLink — Toll-Free Number Routing
+
+**What is a toll-free number?** A phone number with an 8XX NPA (area code) that is free for the caller — the called party pays. Toll-free NPAs: **800, 888, 877, 866, 855, 844, 833, 822**. Any 10-digit number starting with one of these NPAs is a toll-free number (also called TFN or CRN in RouteLink context).
+
+Toll-free numbers are managed by the **Somos TFN Registry**, not NPAC/LSMS. They have their own routing system (CPR decision trees) and their own management hierarchy (RespOrgs, not SPIDs). Use the RouteLink tools for toll-free lookups — do NOT use \`lrn_lookup\` for toll-free numbers (they don't have LRNs).
 
 ### ROR (Responsible Organization)
 \`routelink_lookup\` with lookup_type="ror" returns the RespOrg managing a toll-free number.
