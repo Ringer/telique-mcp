@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 export function registerCompositeTools(
   server: McpServer,
@@ -16,6 +17,7 @@ export function registerCompositeTools(
         .regex(/^\d{10}$/)
         .describe("10-digit US phone number"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
       const npa = phone_number.substring(0, 3);
       const nxx = phone_number.substring(3, 6);

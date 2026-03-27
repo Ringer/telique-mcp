@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse, errorResult } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 export function registerRoutelinkTools(
   server: McpServer,
@@ -33,6 +34,7 @@ export function registerRoutelinkTools(
         .optional()
         .describe("3-digit LATA code (required for cic and cicror lookups)"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ crn, lookup_type, ani, lata }) => {
       if (
         (lookup_type === "cic" || lookup_type === "cicror") &&
@@ -80,6 +82,7 @@ export function registerRoutelinkTools(
         .default(0)
         .describe("Pagination offset (default 0)"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ ror, resource_type, limit, offset }) => {
       const result = await client.get(
         `/v1/telique/ror/${ror}/${resource_type}`,
@@ -106,6 +109,7 @@ export function registerRoutelinkTools(
           "Recursively resolve and inline template decision trees (default true)"
         ),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ crn, expand }) => {
       // NOTE: /v1/telique/cpr/* path pending frontend URL map addition.
       // Falls back to /cpr/ which routes to routelink via default backend.

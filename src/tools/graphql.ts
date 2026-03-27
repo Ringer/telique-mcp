@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse, errorResult } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 export function registerGraphqlTools(
   server: McpServer,
@@ -26,6 +27,7 @@ LERG (service='lerg'): Static telecom reference. Uses FilterInput with operators
         .optional()
         .describe("Optional GraphQL variables"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ service, query, variables }) => {
       const path =
         service === "lsms"

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 export function registerCnamTools(
   server: McpServer,
@@ -16,6 +17,7 @@ export function registerCnamTools(
         .regex(/^\d{10,15}$/)
         .describe("10-15 digit phone number to look up"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
       const result = await client.get(`/v1/telique/cnam/${phone_number}`);
       return formatResponse(result);

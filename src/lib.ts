@@ -20,5 +20,8 @@ export { registerKnowledge, TELIQUE_KNOWLEDGE } from "./knowledge.js";
 export { ICONS, ICON_LIGHT_DATA_URI, ICON_DARK_DATA_URI } from "./icons.js";
 export { VERSION } from "./version.js";
 
+// Annotations
+export { READ_ONLY_ANNOTATIONS } from "./annotations.js";
+
 // Types
 export type { ToolRegistrar } from "./types.js";

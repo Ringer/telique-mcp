@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 const LERG_TABLES = [
   "lerg_1",
@@ -48,6 +49,7 @@ export function registerLergTools(
           "Specific table name (e.g. lerg_1, lerg_6, lerg_7_sha). Omit to list all tables."
         ),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ table_name }) => {
       if (table_name) {
         const result = await client.get(
@@ -89,6 +91,7 @@ export function registerLergTools(
         .default(0)
         .describe("Pagination offset (default 0)"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ table_name, fields, query, limit, offset }) => {
       // Encode & as %26 so multi-filters stay in the path segment
       const encodedQuery = query.replace(/&/g, "%26");
@@ -171,6 +174,7 @@ export function registerLergTools(
         .default(0)
         .describe("Pagination offset (default 0)"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ table, fields, filters, join, limit, offset }) => {
       const body: Record<string, unknown> = {
         table,
@@ -228,6 +232,7 @@ export function registerLergTools(
         .default(0)
         .describe("Pagination offset (default 0)"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ npa, nxx, switch_clli, tandem, name, limit, offset }) => {
       const params: Record<string, string | number | undefined> = {
         limit,

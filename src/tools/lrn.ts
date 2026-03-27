@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse, errorResult } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 export function registerLrnTools(
   server: McpServer,
@@ -16,6 +17,7 @@ export function registerLrnTools(
         .regex(/^\d{10}$/)
         .describe("10-digit US phone number"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
       const result = await client.get(`/v1/telique/lrn/${phone_number}`, {
         format: "json",
@@ -44,6 +46,7 @@ export function registerLrnTools(
           "The LRN, SPID, or phone number to query by (depends on query_type)"
         ),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ query_type, value }) => {
       const routeMap: Record<string, { resource: string; param: string }> = {
         phones_by_lrn: { resource: "phone_number", param: "lrn" },
@@ -76,6 +79,7 @@ export function registerLrnTools(
         .regex(/^\d{10}$/)
         .describe("10-digit US phone number to check"),
     },
+    READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
       const result = await client.get(`/v1/telique/dno/${phone_number}`, {
         format: "json",

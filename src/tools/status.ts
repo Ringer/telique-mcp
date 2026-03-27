@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { VERSION } from "../version.js";
 import { formatResponse } from "../utils/formatting.js";
+import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
 
 export function registerStatusTools(
   server: McpServer,
@@ -11,6 +12,7 @@ export function registerStatusTools(
     "telique_status",
     "Returns the Telique MCP server version, authentication mode, and API connectivity status. Use this when asked about the server version or connection status.",
     {},
+    READ_ONLY_ANNOTATIONS,
     async () => {
       let apiReachable = false;
       try {
