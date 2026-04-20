@@ -153,14 +153,17 @@ const { paths, pathParams } = parseYamlLite(specContent) as {
 let errors = 0;
 
 // Check that the spec has a reasonable number of paths
-if (paths.length < 14) {
+if (paths.length < 13) {
   console.error(
-    `ERROR: Expected at least 14 API paths, found ${paths.length}`
+    `ERROR: Expected at least 13 API paths, found ${paths.length}`
   );
   errors++;
 }
 
-// Check key paths exist
+// Check key paths exist.
+// Note: lookup_tn is a client-side composite tool (fans out to 4 separate
+// endpoints in parallel), not a single REST endpoint. It does not appear
+// in the spec.
 const expectedPaths = [
   "/v1/telique/lrn/{phone_number}",
   "/v1/telique/lsms/list/{resource}",
@@ -177,7 +180,6 @@ const expectedPaths = [
   "/v1/telique/cpr/{crn}",
   "/v1/telique/lsms/gql",
   "/v1/telique/lerg/gql",
-  "/v1/telique/lookup/{phone_number}",
 ];
 
 for (const expected of expectedPaths) {

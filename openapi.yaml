@@ -53,10 +53,6 @@ tags:
     description: Toll-free number routing — CIC, ROR, and CPR lookups
   - name: GraphQL
     description: GraphQL interfaces for LSMS and LERG with advanced filtering and joins
-  - name: Composite
-    description: Multi-service aggregation endpoints
-  - name: Status
-    description: Server health and connectivity
 
 paths:
   # ── LRN ──────────────────────────────────────────────────────────
@@ -642,52 +638,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/GraphQLResponse'
 
-  # ── Composite ────────────────────────────────────────────────────
-  /v1/telique/lookup/{phone_number}:
-    get:
-      operationId: lookupTn
-      tags: [Composite]
-      summary: Composite phone number lookup
-      description: |
-        Comprehensive phone number lookup across multiple Telique services in parallel.
-        Dips LRN, CNAM, DNO, and LERG (NPA-NXX from lerg_6) simultaneously and returns
-        a consolidated profile. Use this for a quick, complete view of any phone number.
-      parameters:
-        - name: phone_number
-          in: path
-          required: true
-          description: 10-digit US phone number
-          schema:
-            type: string
-            pattern: '^\d{10}$'
-            example: '3036298301'
-      responses:
-        '200':
-          description: Consolidated phone number profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompositeLookupResponse'
-
-  # ── Status ───────────────────────────────────────────────────────
-  /health:
-    get:
-      operationId: healthCheck
-      tags: [Status]
-      summary: API health check
-      security: []
-      responses:
-        '200':
-          description: API is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: healthy
-
 components:
   securitySchemes:
     apiToken:
@@ -930,23 +880,3 @@ components:
               message:
                 type: string
 
-    CompositeLookupResponse:
-      type: object
-      properties:
-        phone_number:
-          type: string
-        npa:
-          type: string
-          description: 3-digit area code
-        nxx:
-          type: string
-          description: 3-digit exchange code
-        lrn:
-          $ref: '#/components/schemas/LrnLookupResponse'
-        cnam:
-          $ref: '#/components/schemas/CnamLookupResponse'
-        dno:
-          $ref: '#/components/schemas/DnoCheckResponse'
-        lerg_6:
-          type: object
-          description: NPA-NXX routing data from LERG table 6
