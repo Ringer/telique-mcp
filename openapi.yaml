@@ -1,0 +1,952 @@
+openapi: 3.1.0
+info:
+  title: Telique Telecom API
+  version: 1.0.0
+  description: |
+    Unified telecom data API providing access to LRN (Local Routing Number) lookups,
+    CNAM (Caller Name) identification, LERG (Local Exchange Routing Guide) infrastructure data,
+    toll-free number routing via RouteLink, and GraphQL interfaces for advanced queries.
+
+    ## Authentication
+
+    All endpoints require an API token passed via the `x-api-token` header.
+    Anonymous access is available with a rate limit of 10 requests per minute.
+    Authenticated access provides higher rate limits based on your subscription.
+
+    Get your API token at [telique.ringer.tel](https://telique.ringer.tel).
+
+    ## MCP Server
+
+    For AI-assisted development, install the Telique MCP server:
+    ```
+    npm install -g telique-mcp
+    ```
+
+    ## Key Concepts
+
+    - **LERG** — Static telecom infrastructure reference (27 tables, updated monthly from iconectiv BIRRDS). Contains NPA-NXX assignments, switches, tandems, rate centers, carrier names.
+    - **LSMS** — Live NPAC porting data (refreshed within minutes). Contains phone number ownership (SPID), LRN assignments, porting state.
+    - **LRN** — Local Routing Number. Identifies the switch serving a ported phone number. Always dip the LRN before doing LERG lookups on a specific phone number.
+    - **RouteLink** — Toll-free number routing. CPR (Call Processing Records) are decision trees that determine how toll-free calls are routed.
+  contact:
+    name: Ringer Support
+    email: support@ringer.com
+    url: https://telique.ringer.tel
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.telique.ringer.tel
+    description: Production
+
+security:
+  - apiToken: []
+
+tags:
+  - name: LRN
+    description: Local Routing Number lookups and LSMS relationship queries (live NPAC porting data)
+  - name: CNAM
+    description: Caller Name identification via TransUnion LIDB
+  - name: LERG
+    description: Local Exchange Routing Guide — static telecom infrastructure reference (27 tables)
+  - name: RouteLink
+    description: Toll-free number routing — CIC, ROR, and CPR lookups
+  - name: GraphQL
+    description: GraphQL interfaces for LSMS and LERG with advanced filtering and joins
+  - name: Composite
+    description: Multi-service aggregation endpoints
+  - name: Status
+    description: Server health and connectivity
+
+paths:
+  # ── LRN ──────────────────────────────────────────────────────────
+  /v1/telique/lrn/{phone_number}:
+    get:
+      operationId: lrnLookup
+      tags: [LRN]
+      summary: Look up LRN for a phone number
+      description: |
+        Returns the Local Routing Number (LRN), SPID (Service Provider ID), LNP type,
+        and activation timestamp. LRN identifies the switch that serves a ported phone number.
+        Queries live LSMS/NPAC porting data.
+      parameters:
+        - name: phone_number
+          in: path
+          required: true
+          description: 10-digit US phone number
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '3036298301'
+      responses:
+        '200':
+          description: LRN lookup result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LrnLookupResponse'
+              example:
+                lrn: '7207081999'
+                spid: '6214'
+                lnp_type: '1'
+                activation_timestamp: '2019-03-15T00:00:00Z'
+        '404':
+          description: Phone number not found in LSMS
+        '429':
+          description: Rate limit exceeded
+
+  /v1/telique/lsms/list/{resource}:
+    get:
+      operationId: lrnRelationshipQuery
+      tags: [LRN]
+      summary: Query LSMS relationships
+      description: |
+        Find phone numbers by LRN or SPID, SPIDs by LRN or phone number, or LRNs by SPID
+        or phone number. Queries live NPAC porting data.
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          description: The resource type to list
+          schema:
+            type: string
+            enum: [phone_number, spid, lrn]
+        - name: lrn
+          in: query
+          description: Filter by LRN (10-digit)
+          schema:
+            type: string
+        - name: spid
+          in: query
+          description: Filter by SPID (4-character)
+          schema:
+            type: string
+        - name: phone_number
+          in: query
+          description: Filter by phone number (10-digit)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching resources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  count:
+                    type: integer
+
+  /v1/telique/dno/{phone_number}:
+    get:
+      operationId: dnoCheck
+      tags: [LRN]
+      summary: Check Do Not Originate (DNO) list
+      description: |
+        Check if a phone number is on the Do Not Originate list. DNO numbers should never
+        appear as a caller ID because they belong to entities that only receive calls
+        (e.g., IRS, major banks). A match indicates potential caller ID spoofing.
+        Supports prefix matching (3, 6, 7, or 10 digit patterns).
+      parameters:
+        - name: phone_number
+          in: path
+          required: true
+          description: 10-digit US phone number to check
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '8002829500'
+      responses:
+        '200':
+          description: DNO check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DnoCheckResponse'
+              example:
+                is_dno: true
+                matched_pattern: '8002829500'
+                source: 'FTC'
+
+  # ── CNAM ─────────────────────────────────────────────────────────
+  /v1/telique/cnam/{phone_number}:
+    get:
+      operationId: cnamLookup
+      tags: [CNAM]
+      summary: Look up Caller Name (CNAM)
+      description: |
+        Look up the Caller Name (CNAM) for a phone number via TransUnion LIDB.
+        Returns the calling name (up to 15 characters), status, and presentation indicator.
+        Results are cached server-side for 24 hours.
+      parameters:
+        - name: phone_number
+          in: path
+          required: true
+          description: 10-15 digit phone number
+          schema:
+            type: string
+            pattern: '^\d{10,15}$'
+            example: '3036298301'
+      responses:
+        '200':
+          description: CNAM lookup result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CnamLookupResponse'
+              example:
+                calling_name: 'SMITH JOHN'
+                calling_name_status: 'available'
+                presentation_indicator: 'allowed'
+
+  # ── LERG ─────────────────────────────────────────────────────────
+  /v1/telique/lerg/tables:
+    get:
+      operationId: lergListTables
+      tags: [LERG]
+      summary: List all LERG tables
+      description: |
+        Returns metadata for all 27 LERG tables. Key tables: lerg_1 (OCN/carrier directory),
+        lerg_6 (NPA-NXX block assignments), lerg_7 (switch details),
+        lerg_7_sha (switch homing arrangements/tandems), lerg_12 (LRN registry).
+      responses:
+        '200':
+          description: List of LERG tables with metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LergTableInfo'
+
+  /v1/telique/lerg/tables/{table_name}:
+    get:
+      operationId: lergTableInfo
+      tags: [LERG]
+      summary: Get LERG table schema
+      description: Returns detailed metadata and field schema for a specific LERG table.
+      parameters:
+        - name: table_name
+          in: path
+          required: true
+          description: "Table name (e.g. lerg_1, lerg_6, lerg_7_sha)"
+          schema:
+            type: string
+            example: lerg_6
+      responses:
+        '200':
+          description: Table schema and metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LergTableInfo'
+        '404':
+          description: Table not found
+
+  /v1/telique/lerg/{table_name}/{fields}/{query}:
+    get:
+      operationId: lergQuery
+      tags: [LERG]
+      summary: Query a LERG table
+      description: |
+        Query any LERG table by field values. Common queries:
+        - Carrier by OCN: `lerg_1/ocn_num,ocn_name,ocn_state/ocn_num=9545`
+        - NPA-NXX info: `lerg_6/npa,nxx,loc_name,ocn,switch,lata/npa=303&nxx=629`
+        - Switch details: `lerg_7/switch,ocn,aocn/switch=DNVRCOMADS0`
+        - LRN registry: `lerg_12/lrn,lata,switch,ocn/lrn=7207081999`
+
+        Multiple filters are joined with `&` in the query path segment.
+      parameters:
+        - name: table_name
+          in: path
+          required: true
+          description: Table to query (e.g. lerg_1, lerg_6, lerg_7)
+          schema:
+            type: string
+        - name: fields
+          in: path
+          required: true
+          description: Comma-separated field names to return
+          schema:
+            type: string
+            example: 'npa,nxx,loc_name,ocn,switch,lata'
+        - name: query
+          in: path
+          required: true
+          description: "Filter in field=value format, multiple filters joined with & (URL-encoded as %26)"
+          schema:
+            type: string
+            example: 'npa=303%26nxx=629'
+        - name: limit
+          in: query
+          description: Max results (default 100, max 10000)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 100
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LergQueryResponse'
+
+  /v1/telique/lerg/query:
+    post:
+      operationId: lergComplexQuery
+      tags: [LERG]
+      summary: Complex LERG query with JOINs
+      description: |
+        Execute a complex LERG query with JOINs across multiple tables. Supports filter
+        operators: eq, ne, gt, gte, lt, lte, like, in, isnull, isnotnull.
+
+        Use this when you need to combine data from different LERG tables, such as joining
+        NPA-NXX data (lerg_6) with carrier info (lerg_1) via OCN.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LergComplexQueryRequest'
+            example:
+              table: lerg_6
+              fields: ['npa', 'nxx', 'ocn', 'loc_name']
+              filters:
+                - field: npa
+                  operator: eq
+                  value: '303'
+                - field: nxx
+                  operator: eq
+                  value: '629'
+              join:
+                table: lerg_1
+                on:
+                  - left_field: ocn
+                    right_field: ocn_num
+                fields: ['ocn_name', 'ocn_state']
+                join_type: inner
+              limit: 100
+              offset: 0
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LergQueryResponse'
+
+  /v1/telique/lerg/tandem:
+    get:
+      operationId: lergTandem
+      tags: [LERG]
+      summary: Look up tandem routing
+      description: |
+        Look up tandem routing information via SQL JOINs across lerg_6, lerg_7_sha, and lerg_1.
+        Query by NPA+NXX, switch CLLI, tandem CLLI, or carrier name pattern.
+        Returns tandem switch, OCN, LATA, and routing path.
+      parameters:
+        - name: npa
+          in: query
+          description: 3-digit area code (use with nxx)
+          schema:
+            type: string
+            pattern: '^\d{3}$'
+        - name: nxx
+          in: query
+          description: 3-digit exchange code (use with npa)
+          schema:
+            type: string
+            pattern: '^\d{3}$'
+        - name: switch
+          in: query
+          description: Switch CLLI code (e.g. DNVRCOMADS0)
+          schema:
+            type: string
+        - name: tandem
+          in: query
+          description: Tandem CLLI code — reverse lookup to find what subtends it
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: "Carrier name pattern with % wildcard (e.g. %VERIZON%). Case-insensitive."
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Max results (default 100, max 10000)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 100
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Tandem routing results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LergQueryResponse'
+
+  # ── RouteLink ────────────────────────────────────────────────────
+  /v1/telique/ror/{crn}:
+    get:
+      operationId: routelinkRorLookup
+      tags: [RouteLink]
+      summary: Look up Responsible Organization for a toll-free number
+      description: |
+        Resolves a toll-free number (CRN) to its Responsible Organization (ROR).
+        The ROR is the entity responsible for managing the toll-free number's routing.
+      parameters:
+        - name: crn
+          in: path
+          required: true
+          description: 10-digit toll-free number (CRN)
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '8005551234'
+      responses:
+        '200':
+          description: ROR lookup result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RorLookupResponse'
+              example:
+                crn: '8005551234'
+                ror: 'ATX01'
+
+  /v1/telique/{lookup_type}/{crn}/{ani}/{lata}:
+    get:
+      operationId: routelinkCicLookup
+      tags: [RouteLink]
+      summary: Look up toll-free carrier routing
+      description: |
+        Resolves a toll-free number (CRN) to its carrier (CIC) by interpreting the CPR
+        decision tree using the caller's ANI and LATA. Use `cicror` to get both CIC and ROR
+        in a single request.
+      parameters:
+        - name: lookup_type
+          in: path
+          required: true
+          description: "Type of lookup: cic (carrier only) or cicror (carrier + responsible org)"
+          schema:
+            type: string
+            enum: [cic, cicror]
+        - name: crn
+          in: path
+          required: true
+          description: 10-digit toll-free number (CRN)
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '8005551234'
+        - name: ani
+          in: path
+          required: true
+          description: 10-digit calling party number
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '3035551234'
+        - name: lata
+          in: path
+          required: true
+          description: 3-digit LATA code
+          schema:
+            type: string
+            pattern: '^\d{3}$'
+            example: '656'
+      responses:
+        '200':
+          description: Carrier routing result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CicLookupResponse'
+              example:
+                crn: '8005551234'
+                cic: '0288'
+                ror: 'ATX01'
+
+  /v1/telique/ror/{ror}/{resource_type}:
+    get:
+      operationId: routelinkRorQuery
+      tags: [RouteLink]
+      summary: List toll-free numbers or CPRs by ROR
+      description: |
+        List toll-free numbers (TFNs) or Call Processing Records (CPRs) associated with
+        a Responsible Organization. Use this to explore which toll-free numbers a specific
+        organization manages.
+      parameters:
+        - name: ror
+          in: path
+          required: true
+          description: 1-5 character alphanumeric ROR code
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9]{1,5}$'
+            example: 'ATX01'
+        - name: resource_type
+          in: path
+          required: true
+          description: Whether to list TFNs or CPRs
+          schema:
+            type: string
+            enum: [tfns, cprs]
+        - name: limit
+          in: query
+          description: Max results (default 100, max 10000)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 100
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of TFNs or CPRs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  count:
+                    type: integer
+
+  /v1/telique/cpr/{crn}:
+    get:
+      operationId: routelinkCpr
+      tags: [RouteLink]
+      summary: Retrieve Call Processing Record (CPR)
+      description: |
+        Retrieve the full Call Processing Record for a toll-free number. A CPR is a routing
+        decision tree that determines how calls are routed based on criteria like LATA, NPA,
+        NXX, ANI, DAY_OF_WEEK, TIME_OF_DAY, PERCENT, STATE, etc.
+
+        Returns the CPR structure, SHA1 hash, ROR, and optionally expanded template references.
+      parameters:
+        - name: crn
+          in: path
+          required: true
+          description: 1-10 digit CRN (toll-free number or template CRN). Shorter values are zero-padded to 10 digits.
+          schema:
+            type: string
+            pattern: '^\d{1,10}$'
+            example: '8005551234'
+        - name: expand
+          in: query
+          description: Recursively resolve and inline template decision trees (default true)
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: CPR decision tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CprResponse'
+
+  # ── GraphQL ──────────────────────────────────────────────────────
+  /v1/telique/lsms/gql:
+    post:
+      operationId: graphqlLsms
+      tags: [GraphQL]
+      summary: LSMS GraphQL endpoint
+      description: |
+        Execute GraphQL queries against the LSMS (live NPAC porting data).
+
+        Key queries: `subscriptionVersion(phoneNumber)`, `subscriptionVersionsByLrn(lrn, limit)`,
+        `subscriptionVersionsBySpid(spid, limit)`, `numberBlock(npanxxx)`, `serviceProviders(limit)`,
+        `locationRoutingNumber(lrn)`, `npanxxBySpid(spid, limit)`, `lsmsStats`.
+
+        Relationships: `subscriptionVersion` → `serviceProvider`, → `lrnMetadata`.
+        Safety limits: max 1000 results, 10s timeout. Large tables (subscriptionVersions 514M rows) MUST be filtered.
+
+        **Important:** LSMS uses named query parameters, NOT FilterInput syntax.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLRequest'
+            example:
+              query: '{ subscriptionVersion(phoneNumber: "3036298301") { phoneNumber lrn spid lnpType activationTimestamp } }'
+      responses:
+        '200':
+          description: GraphQL response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLResponse'
+
+  /v1/telique/lerg/gql:
+    post:
+      operationId: graphqlLerg
+      tags: [GraphQL]
+      summary: LERG GraphQL endpoint
+      description: |
+        Execute GraphQL queries against the LERG (static telecom reference data).
+
+        27 tables with camelCase names (lerg1, lerg6, lerg7Sha). Return fields MUST be camelCase
+        (ocnName not ocn_name). Uses FilterInput with operators: EQ, NE, GT, GTE, LT, LTE, LIKE, IN, ISNULL, ISNOTNULL.
+
+        LIKE patterns MUST be UPPERCASE. Filter syntax: `{ field: "ocnName", op: LIKE, value: "%VERIZON%" }`.
+        IN uses `values` (plural). Relationships: `lerg6` → `carrier`, → `switchInfo`, → `homingArrangements`.
+        Also supports `dynamicJoin` for arbitrary cross-table SQL joins.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLRequest'
+            example:
+              query: '{ lerg6(filters: [{ field: "npa", op: EQ, value: "303" }, { field: "nxx", op: EQ, value: "629" }], limit: 5) { npa nxx locName ocn switchClli lata carrier { ocnName } } }'
+      responses:
+        '200':
+          description: GraphQL response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLResponse'
+
+  # ── Composite ────────────────────────────────────────────────────
+  /v1/telique/lookup/{phone_number}:
+    get:
+      operationId: lookupTn
+      tags: [Composite]
+      summary: Composite phone number lookup
+      description: |
+        Comprehensive phone number lookup across multiple Telique services in parallel.
+        Dips LRN, CNAM, DNO, and LERG (NPA-NXX from lerg_6) simultaneously and returns
+        a consolidated profile. Use this for a quick, complete view of any phone number.
+      parameters:
+        - name: phone_number
+          in: path
+          required: true
+          description: 10-digit US phone number
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '3036298301'
+      responses:
+        '200':
+          description: Consolidated phone number profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompositeLookupResponse'
+
+  # ── Status ───────────────────────────────────────────────────────
+  /health:
+    get:
+      operationId: healthCheck
+      tags: [Status]
+      summary: API health check
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+
+components:
+  securitySchemes:
+    apiToken:
+      type: apiKey
+      in: header
+      name: x-api-token
+      description: |
+        API token for authentication. Get yours at [telique.ringer.tel](https://telique.ringer.tel).
+        Anonymous access (no token) is rate-limited to 10 requests per minute.
+
+  schemas:
+    LrnLookupResponse:
+      type: object
+      properties:
+        lrn:
+          type: string
+          description: 10-digit Local Routing Number
+          example: '7207081999'
+        spid:
+          type: string
+          description: 4-character Service Provider ID
+          example: '6214'
+        lnp_type:
+          type: string
+          description: Local Number Portability type
+          example: '1'
+        activation_timestamp:
+          type: string
+          format: date-time
+          description: When the port was activated
+
+    DnoCheckResponse:
+      type: object
+      properties:
+        is_dno:
+          type: boolean
+          description: Whether the number is on the DNO list
+        matched_pattern:
+          type: string
+          description: The DNO pattern that matched (3, 6, 7, or 10 digits)
+        source:
+          type: string
+          description: Source of the DNO listing
+
+    CnamLookupResponse:
+      type: object
+      properties:
+        calling_name:
+          type: string
+          description: Caller name (up to 15 characters)
+          example: 'SMITH JOHN'
+        calling_name_status:
+          type: string
+          enum: [available, unavailable]
+          description: Whether a name was found
+        presentation_indicator:
+          type: string
+          enum: [allowed, restricted]
+          description: Whether the name may be displayed
+
+    LergTableInfo:
+      type: object
+      properties:
+        table_name:
+          type: string
+          example: lerg_6
+        description:
+          type: string
+        row_count:
+          type: integer
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+              description:
+                type: string
+
+    LergQueryResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+          description: Array of result rows
+        count:
+          type: integer
+          description: Total matching rows (may exceed returned rows)
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    LergComplexQueryRequest:
+      type: object
+      required: [table, filters]
+      properties:
+        table:
+          type: string
+          description: Primary table name (e.g. lerg_6)
+        fields:
+          type: array
+          items:
+            type: string
+          description: Fields to return from primary table
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/LergFilter'
+          description: Filter conditions
+        join:
+          $ref: '#/components/schemas/LergJoin'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 100
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+
+    LergFilter:
+      type: object
+      required: [field, operator, value]
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum: [eq, ne, gt, gte, lt, lte, like, in, isnull, isnotnull]
+        value:
+          oneOf:
+            - type: string
+            - type: number
+
+    LergJoin:
+      type: object
+      required: [table, on]
+      properties:
+        table:
+          type: string
+          description: Table to join (e.g. lerg_1)
+        on:
+          type: array
+          items:
+            type: object
+            required: [left_field, right_field]
+            properties:
+              left_field:
+                type: string
+              right_field:
+                type: string
+          description: Join conditions
+        fields:
+          type: array
+          items:
+            type: string
+          description: Fields to return from joined table
+        join_type:
+          type: string
+          enum: [inner, left]
+          default: inner
+
+    RorLookupResponse:
+      type: object
+      properties:
+        crn:
+          type: string
+          description: The toll-free number queried
+        ror:
+          type: string
+          description: 1-5 character Responsible Organization code
+
+    CicLookupResponse:
+      type: object
+      properties:
+        crn:
+          type: string
+          description: The toll-free number queried
+        cic:
+          type: string
+          description: 4-digit Carrier Identification Code
+        ror:
+          type: string
+          description: Responsible Organization code (only for cicror lookups)
+
+    CprResponse:
+      type: object
+      properties:
+        crn:
+          type: string
+        ror:
+          type: string
+        sha1:
+          type: string
+          description: SHA1 hash of the CPR
+        cpr:
+          type: object
+          description: |
+            CPR decision tree structure. Nodes contain a `type` (LATA, NPA, NXX, ANI,
+            DAY_OF_WEEK, TIME_OF_DAY, PERCENT, STATE, etc.) and either `branches`
+            (for decision nodes) or a `cic` (for terminal/carrier nodes).
+          properties:
+            type:
+              type: string
+            branches:
+              type: array
+              items:
+                type: object
+
+    GraphQLRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          description: GraphQL query string
+        variables:
+          type: object
+          additionalProperties: true
+          description: Optional GraphQL variables
+
+    GraphQLResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          description: Query result data
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              message:
+                type: string
+
+    CompositeLookupResponse:
+      type: object
+      properties:
+        phone_number:
+          type: string
+        npa:
+          type: string
+          description: 3-digit area code
+        nxx:
+          type: string
+          description: 3-digit exchange code
+        lrn:
+          $ref: '#/components/schemas/LrnLookupResponse'
+        cnam:
+          $ref: '#/components/schemas/CnamLookupResponse'
+        dno:
+          $ref: '#/components/schemas/DnoCheckResponse'
+        lerg_6:
+          type: object
+          description: NPA-NXX routing data from LERG table 6
