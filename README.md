@@ -13,13 +13,9 @@ OAuth-authenticated. Works on claude.ai, Claude Desktop, and Claude mobile. No l
 - **URL:** `https://mcp.telique.ringer.tel`
 - Add it as a custom MCP connector in your Claude client's settings.
 
-### Claude Code — plugin
+### Claude Code — plugin _(coming soon)_
 
-```
-/plugin install telique@Ringer/telique-mcp
-```
-
-Uses the repo's bundled `.claude-plugin/` manifest. OAuth; no local token to manage.
+A `/plugin install` path is in the works — tracked in [#5](https://github.com/Ringer/telique-mcp/issues/5). For now, Claude Code users should use either the hosted connector above or the npm stdio path below.
 
 ### npm stdio — advanced / offline
 
@@ -36,7 +32,7 @@ The setup wizard detects installed AI clients and registers automatically.
 
 **Which should I pick?**
 - claude.ai, Claude Desktop, or mobile → **hosted connector**
-- Claude Code → **plugin**
+- Claude Code → **hosted connector** today; plugin path [coming soon](https://github.com/Ringer/telique-mcp/issues/5)
 - CI, offline, or building against the server → **npm stdio**
 
 ## What You Get
