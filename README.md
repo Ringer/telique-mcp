@@ -8,14 +8,10 @@ Pick **one** install surface.
 
 ### Recommended — Hosted connector
 
-OAuth-authenticated. Works on claude.ai, Claude Desktop, and Claude mobile. No local Node runtime.
+OAuth-authenticated. Works on claude.ai, Claude Desktop, Claude Code, and Claude mobile. No local Node runtime.
 
 - **URL:** `https://mcp.telique.ringer.tel`
 - Add it as a custom MCP connector in your Claude client's settings.
-
-### Claude Code — plugin _(coming soon)_
-
-A `/plugin install` path is in the works — tracked in [#5](https://github.com/Ringer/telique-mcp/issues/5). For now, Claude Code users should use either the hosted connector above or the npm stdio path below.
 
 ### npm stdio — advanced / offline
 
@@ -28,12 +24,7 @@ telique-mcp setup
 
 The setup wizard detects installed AI clients and registers automatically.
 
-> ⚠️ **Install only one surface.** Running more than one exposes the same tools under overlapping namespaces and causes confusing shadowing of tool results.
-
-**Which should I pick?**
-- claude.ai, Claude Desktop, or mobile → **hosted connector**
-- Claude Code → **hosted connector** today; plugin path [coming soon](https://github.com/Ringer/telique-mcp/issues/5)
-- CI, offline, or building against the server → **npm stdio**
+> ⚠️ **Install only one surface.** Running both exposes the same tools under overlapping namespaces and causes confusing shadowing of tool results.
 
 ## What You Get
 

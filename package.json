@@ -20,8 +20,7 @@
   "files": [
     "dist",
     "postinstall.js",
-    "openapi.yaml",
-    ".claude-plugin"
+    "openapi.yaml"
   ],
   "scripts": {
     "build": "tsc",
