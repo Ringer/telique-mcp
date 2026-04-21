@@ -1,6 +1,6 @@
 {
   "name": "telique-mcp",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "MCP server for Telique telecom APIs (RouteLink, LRN, CNAM, LERG)",
   "type": "module",
   "main": "dist/index.js",
@@ -20,9 +20,7 @@
   "files": [
     "dist",
     "postinstall.js",
-    "openapi.yaml",
-    ".claude-plugin",
-    ".mcp.json"
+    "openapi.yaml"
   ],
   "scripts": {
     "build": "tsc",
