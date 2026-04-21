@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import { execSync, execFileSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 import { CONFIG_DIR, CONFIG_FILE } from "./config.js";
+import { TeliqueClient } from "./client.js";
 import { ICON_DARK_DATA_URI } from "./icons.js";
 
 const REGISTER_URL = "https://telique.ringer.tel/register";
@@ -393,12 +394,19 @@ function saveToken(token: string): void {
 }
 
 async function validateToken(token: string): Promise<boolean> {
+  // Dip a documented, token-required endpoint. /health is an internal probe
+  // not in openapi.yaml and returns 403 from non-allowlisted IPs, which
+  // would falsely reject valid tokens during setup.
   try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
-      headers: { "x-api-token": token },
-      signal: AbortSignal.timeout(10000),
+    const client = new TeliqueClient({
+      baseUrl: API_BASE_URL,
+      apiToken: token,
+      requestTimeoutMs: 10000,
     });
-    return response.ok;
+    const result = await client.get("/v1/telique/lerg/tables");
+    return (
+      typeof result === "object" && result !== null && !("_error" in result)
+    );
   } catch {
     return false;
   }

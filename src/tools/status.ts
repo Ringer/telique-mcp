@@ -16,6 +16,8 @@ export function registerStatusTools(
     async () => {
       let apiReachable = false;
       try {
+        // Internal probe: /health is not in openapi.yaml and returns 403 from
+        // non-allowlisted IPs. Best-effort connectivity indicator only.
         const result = await client.get("/health");
         apiReachable =
           typeof result === "object" &&

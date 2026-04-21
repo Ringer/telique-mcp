@@ -161,9 +161,9 @@ if (paths.length < 13) {
 }
 
 // Check key paths exist.
-// Note: lookup_tn is a client-side composite tool (fans out to 4 separate
-// endpoints in parallel), not a single REST endpoint. It does not appear
-// in the spec.
+// Note: lookup_tn is a client-side fan-out (4 parallel endpoint calls —
+// LRN, CNAM, DNO, LERG). No server-side composite endpoint exists, so it
+// is intentionally absent from openapi.yaml.
 const expectedPaths = [
   "/v1/telique/lrn/{phone_number}",
   "/v1/telique/lsms/list/{resource}",
