@@ -4,12 +4,40 @@ Telecom data tools for AI assistants. Query LRN, CNAM, DNO, LERG routing tables,
 
 ## Install
 
+Pick **one** install surface.
+
+### Recommended — Hosted connector
+
+OAuth-authenticated. Works on claude.ai, Claude Desktop, and Claude mobile. No local Node runtime.
+
+- **URL:** `https://mcp.telique.ringer.tel`
+- Add it as a custom MCP connector in your Claude client's settings.
+
+### Claude Code — plugin
+
+```
+/plugin install telique@Ringer/telique-mcp
+```
+
+Uses the repo's bundled `.claude-plugin/` manifest. OAuth; no local token to manage.
+
+### npm stdio — advanced / offline
+
+For CI, local development, or clients that don't support remote MCP. Stores a long-lived `tlq_…` token at `~/.telique/config.json`.
+
 ```bash
 npm install -g telique-mcp
 telique-mcp setup
 ```
 
-The setup wizard detects your installed AI clients and registers automatically.
+The setup wizard detects installed AI clients and registers automatically.
+
+> ⚠️ **Install only one surface.** Running more than one exposes the same tools under overlapping namespaces and causes confusing shadowing of tool results.
+
+**Which should I pick?**
+- claude.ai, Claude Desktop, or mobile → **hosted connector**
+- Claude Code → **plugin**
+- CI, offline, or building against the server → **npm stdio**
 
 ## What You Get
 

@@ -308,7 +308,9 @@ Use \`graphql_query\` for complex queries not possible with REST:
 
 **CRITICAL naming rules:**
 - **Query names** are camelCase: \`lerg1\`, \`lerg6\`, \`lerg7Sha\`, \`lerg7ShaIns\`, \`lerg12\`, etc.
+- **Object-type names use a \`Gql\` prefix.** \`__type(name: "Lerg6")\` returns null — the actual type is \`GqlLerg6\`. Rule: snake_case table ID → PascalCase + \`Gql\` prefix (\`lerg_6\` → \`GqlLerg6\`, \`lerg_7_sha\` → \`GqlLerg7Sha\`, \`lerg_8_loc\` → \`GqlLerg8Loc\`). Use this when introspecting types directly.
 - **Return fields** MUST be camelCase: \`ocnName\`, \`locState\`, \`locName\`, \`shaIndicator\`, \`hTrmDTdm\`
+- **REST fields are snake_case; GraphQL fields are camelCase — 1:1 convertible.** \`coc_type\` ↔ \`cocType\`, \`loc_name\` ↔ \`locName\`, \`ocn_num\` ↔ \`ocnNum\`, \`sha_indicator\` ↔ \`shaIndicator\`. GraphQL \`FilterInput\` \`field:\` accepts both forms; REST query paths and GraphQL selection sets do not.
 - **Filter field names** accept BOTH camelCase (\`ocnName\`) and snake_case (\`ocn_name\`)
 - **All values are strings** — even numeric fields. Always quote: \`value: "720"\` not \`value: 720\`
 - **GraphQL LIKE is case-sensitive (SQL)** — LERG data is stored UPPERCASE, so patterns must be uppercase: \`%VERIZON%\` not \`%verizon%\`. (The REST \`like\` operator is case-insensitive — this only applies to GraphQL.)

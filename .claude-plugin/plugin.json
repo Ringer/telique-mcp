@@ -10,7 +10,7 @@
   "homepage": "https://telique.ringer.tel",
   "license": "MIT",
   "keywords": ["telecom", "lrn", "cnam", "lerg", "routelink", "mcp"],
-  "mcpServers": "./.mcp.json",
+  "mcpServers": "./mcp-servers.json",
   "userConfig": {
     "api_token": {
       "description": "Your Telique API token (get one at telique.ringer.tel). Leave empty for anonymous mode (10 ops/min).",

@@ -1,6 +1,8 @@
 # Installing Telique MCP
 
-Telique MCP gives AI assistants access to telecom routing data, caller ID lookups, number portability info, and LERG reference data through 13 tools.
+Telique MCP gives AI assistants access to telecom routing data, caller ID lookups, number portability info, and LERG reference data through 14 tools.
+
+> **Before you install:** most users should use the hosted connector at `https://mcp.telique.ringer.tel` (OAuth, works on claude.ai, Claude Desktop, and mobile — no local Node runtime). Claude Code users should install the plugin. This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the full three-surface decision tree.
 
 ## Quick Start
 
@@ -79,10 +81,10 @@ telique-mcp setup   # select Claude Code when prompted
 
 ```bash
 # With API key
-claude mcp add -s user telique -e TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
+claude mcp add -s user telique-local -e TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
 
 # Anonymous mode
-claude mcp add -s user telique -- npx -y telique-mcp
+claude mcp add -s user telique-local -- npx -y telique-mcp
 ```
 
 Restart Claude Code to load the tools. Verify with `/mcp`.
@@ -107,12 +109,12 @@ Edit the Claude Desktop config file:
 | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 | Linux | `~/.config/Claude/claude_desktop_config.json` |
 
-Add the `telique` entry under `mcpServers`:
+Add the `telique-local` entry under `mcpServers`:
 
 ```json
 {
   "mcpServers": {
-    "telique": {
+    "telique-local": {
       "command": "npx",
       "args": ["-y", "telique-mcp"],
       "env": {
@@ -142,7 +144,7 @@ Edit `~/.cursor/mcp.json` (same path on all platforms):
 ```json
 {
   "mcpServers": {
-    "telique": {
+    "telique-local": {
       "command": "npx",
       "args": ["-y", "telique-mcp"],
       "env": {
@@ -180,7 +182,7 @@ Add the entry under `github.copilot.chat.mcp.servers`:
 ```json
 {
   "github.copilot.chat.mcp.servers": {
-    "telique": {
+    "telique-local": {
       "command": "npx",
       "args": ["-y", "telique-mcp"],
       "env": {
@@ -207,10 +209,10 @@ telique-mcp setup   # select Codex CLI when prompted
 
 ```bash
 # With API key
-codex mcp add telique --env TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
+codex mcp add telique-local --env TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
 
 # Anonymous mode
-codex mcp add telique -- npx -y telique-mcp
+codex mcp add telique-local -- npx -y telique-mcp
 ```
 
 ---
@@ -297,10 +299,10 @@ To remove the MCP registration from your clients, run the appropriate command:
 
 ```bash
 # Claude Code
-claude mcp remove -s user telique
+claude mcp remove -s user telique-local
 
 # Codex CLI
-codex mcp remove telique
+codex mcp remove telique-local
 ```
 
-For Claude Desktop, Cursor, and VS Code, remove the `telique` entry from the respective config file. For ChatGPT Desktop, remove it through the app's Settings UI.
+For Claude Desktop, Cursor, and VS Code, remove the `telique-local` entry from the respective config file. For ChatGPT Desktop, remove it through the app's Settings UI.
