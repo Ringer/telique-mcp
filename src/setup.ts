@@ -167,11 +167,13 @@ function detectMcpClients(): McpClient[] {
     });
   }
 
-  // Codex CLI
-  if (commandExists("codex")) {
+  // Codex (CLI and/or Desktop — both share ~/.codex/config.toml,
+  // so one `codex mcp add` configures whichever surfaces are installed)
+  const codex = findCodexBinary();
+  if (codex) {
     clients.push({
-      name: "Codex CLI",
-      register: (token) => registerCodex(token),
+      name: codex.label,
+      register: (token) => registerCodex(token, codex.bin),
     });
   }
 
@@ -228,11 +230,14 @@ function registerClaudeCode(token: string | null): boolean {
   }
 }
 
-function registerCodex(token: string | null): boolean {
+function registerCodex(
+  token: string | null,
+  bin: string = "codex"
+): boolean {
   try {
     // Remove existing entry first
     try {
-      execFileSync("codex", ["mcp", "remove", "telique"], { stdio: "ignore" });
+      execFileSync(bin, ["mcp", "remove", "telique"], { stdio: "ignore" });
     } catch {
       // ignore
     }
@@ -242,7 +247,7 @@ function registerCodex(token: string | null): boolean {
       args.push("--env", `TELIQUE_API_TOKEN=${token}`);
     }
     args.push("--", "npx", "-y", "telique-mcp");
-    execFileSync("codex", args, { stdio: "ignore" });
+    execFileSync(bin, args, { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -372,6 +377,28 @@ function commandExists(cmd: string): boolean {
   } catch {
     return false;
   }
+}
+
+function findCodexBinary(): { bin: string; label: string } | null {
+  // Codex Desktop ships its own codex binary inside the .app bundle, and both
+  // it and the standalone CLI read/write the same ~/.codex/config.toml — so
+  // either binary is sufficient to register an MCP server for both surfaces.
+  const desktopBin =
+    process.platform === "darwin"
+      ? "/Applications/Codex.app/Contents/Resources/codex"
+      : null;
+  const desktopAvailable = desktopBin !== null && existsSync(desktopBin);
+
+  if (commandExists("codex")) {
+    return {
+      bin: "codex",
+      label: desktopAvailable ? "Codex (CLI + Desktop)" : "Codex CLI",
+    };
+  }
+  if (desktopAvailable && desktopBin) {
+    return { bin: desktopBin, label: "Codex Desktop" };
+  }
+  return null;
 }
 
 function loadExistingToken(): string | null {
