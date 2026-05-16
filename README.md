@@ -70,6 +70,7 @@ The setup wizard auto-detects and registers with:
 - Cursor
 - GitHub Copilot (VS Code)
 - Codex CLI
+- Codex Desktop (macOS — also configured automatically when only the .app is installed; CLI and Desktop share `~/.codex/config.toml`)
 - ChatGPT Desktop (manual setup)
 
 See [INSTALL.md](INSTALL.md) for manual configuration and platform-specific paths.

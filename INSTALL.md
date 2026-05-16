@@ -197,12 +197,18 @@ Omit the `env` block to use anonymous mode. Reload VS Code.
 
 ---
 
-### Codex CLI
+### Codex (CLI and/or Desktop)
+
+The setup wizard handles both surfaces with a single registration. Codex CLI and the Codex Desktop app on macOS share `~/.codex/config.toml`, so one `codex mcp add` covers whichever surfaces you have installed. The wizard label adapts to what it finds:
+
+- `Codex (CLI + Desktop)` when both are installed
+- `Codex CLI` when only the standalone CLI is on `PATH`
+- `Codex Desktop` when only the macOS app is installed (the wizard uses the binary bundled inside `/Applications/Codex.app/Contents/Resources/codex` to register)
 
 **Automatic (recommended):**
 
 ```bash
-telique-mcp setup   # select Codex CLI when prompted
+telique-mcp setup   # select the Codex entry when prompted
 ```
 
 **Manual:**
@@ -214,6 +220,14 @@ codex mcp add telique-local --env TELIQUE_API_TOKEN=your-key-here -- npx -y teli
 # Anonymous mode
 codex mcp add telique-local -- npx -y telique-mcp
 ```
+
+If you only have Codex Desktop and no `codex` binary on `PATH`, run the bundled binary by absolute path:
+
+```bash
+/Applications/Codex.app/Contents/Resources/codex mcp add telique-local -- npx -y telique-mcp
+```
+
+Restart Codex (or quit and relaunch the Desktop app) to pick up the new server.
 
 ---
 
