@@ -62,9 +62,10 @@ paths:
       tags: [LRN]
       summary: Look up LRN for a phone number
       description: |
-        Returns the Local Routing Number (LRN), SPID (Service Provider ID), LNP type,
-        and activation timestamp. LRN identifies the switch that serves a ported phone number.
-        Queries live LSMS/NPAC porting data.
+        Returns the Local Routing Number (LRN), SPID (Service Provider ID), and LNP type.
+        LRN identifies the switch that serves a ported phone number. Queries live LSMS/NPAC
+        porting data. For the authoritative NPAC port activation timestamp, use the LSMS
+        GraphQL `subscriptionVersion` query instead — the REST response no longer carries it.
       parameters:
         - name: phone_number
           in: path
@@ -85,7 +86,6 @@ paths:
                 lrn: '7207081999'
                 spid: '6214'
                 lnp_type: '1'
-                activation_timestamp: '2019-03-15T00:00:00Z'
         '404':
           description: Phone number not found in LSMS
         '429':
@@ -664,10 +664,6 @@ components:
           type: string
           description: Local Number Portability type
           example: '1'
-        activation_timestamp:
-          type: string
-          format: date-time
-          description: When the port was activated
 
     DnoCheckResponse:
       type: object

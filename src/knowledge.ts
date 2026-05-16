@@ -192,14 +192,14 @@ Returns the current LRN and carrier for a phone number. This is the fastest look
   "timestamp": "2025-08-07T02:30:00Z",
   "metadata": {
     "spid": "567G",
-    "lnp_type": "lspp",
-    "activation_timestamp": "2024-01-15T10:30:00Z",
-    "last_updated": "2025-08-07T01:30:00Z"
+    "lnp_type": "lspp"
   }
 }
 \`\`\`
 
 Default format is plain text (\`LRN;SPID\`, e.g., \`7207081999;567G\`). Use \`?format=json\` for structured response.
+
+**Note:** The REST LRN response does not include port-activation history. For the authoritative NPAC port activation timestamp, query LSMS GraphQL: \`subscriptionVersion(phoneNumber) { activationTimestamp }\`.
 
 ### LSMS Relationship Queries (\`lrn_relationship_query\` tool)
 
