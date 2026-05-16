@@ -2,7 +2,7 @@
 
 Telique MCP gives AI assistants access to telecom routing data, caller ID lookups, number portability info, and LERG reference data through 14 tools.
 
-> **Before you install:** most users should use the hosted connector at `https://mcp.telique.ringer.tel` (OAuth, works on claude.ai, Claude Desktop, and mobile — no local Node runtime). Claude Code users should install the plugin. This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the full three-surface decision tree.
+> **Before you install:** most users should use the hosted connector at `https://mcp.telique.ringer.tel` (OAuth, works on claude.ai, Claude Desktop, Claude Code, and mobile — no local Node runtime). This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the install-surface decision tree.
 
 ## Quick Start
 

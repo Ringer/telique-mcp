@@ -20,7 +20,7 @@ export function registerKnowledge(server: McpServer): void {
 
 export const TELIQUE_KNOWLEDGE = `# Telique Telecom API Knowledge Base
 
-You have access to 13 Telique tools for querying live telecom data. NEVER guess carrier names, LRNs, routing data, or CNAM — always query the API.
+You have access to 14 Telique tools for querying live telecom data. NEVER guess carrier names, LRNs, routing data, or CNAM — always query the API.
 
 ---
 
