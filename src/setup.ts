@@ -7,7 +7,7 @@ import { TeliqueClient } from "./client.js";
 import { ICON_DARK_DATA_URI } from "./icons.js";
 
 const REGISTER_URL = "https://telique.ringer.tel/register";
-const API_BASE_URL = "https://api-dev.ringer.tel";
+const API_BASE_URL = "https://api.telique.ringer.tel";
 
 export async function runSetup(): Promise<void> {
   const rl = createInterface({ input: stdin, output: stdout });
