@@ -1,5 +1,7 @@
 # CPR URL Map Addition — Handoff for Frontend Team
 
+> **✅ RESOLVED (2026-06-25).** The requested rule now exists in `ringer-telique-frontend/terraform/url-map.tf`: `/v1/telique/cpr/*` → `routelink` backend with `path_prefix_rewrite = "/cpr/"` (synced to production state in commit `9480d16`). This handoff is retained for history; no action remains.
+
 ## Context
 
 The telique-mcp server includes a `routelink_cpr` tool that retrieves Call Processing Records (CPR decision trees) for toll-free numbers. All other RouteLink endpoints have canonical `/v1/telique/*` paths in the load balancer URL map, but CPR currently does not.
