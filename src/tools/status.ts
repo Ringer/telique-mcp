@@ -32,7 +32,7 @@ export function registerStatusTools(
         version: VERSION,
         mode: client.isAnonymous ? "anonymous (10 ops/min)" : "authenticated",
         api_connected: apiReachable,
-        api_base_url: "https://api-dev.ringer.tel",
+        api_base_url: "https://api.telique.ringer.tel",
         tools_count: 14,
       });
     }

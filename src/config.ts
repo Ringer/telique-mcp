@@ -29,7 +29,7 @@ export function loadConfig(): Config {
     process.env.TELIQUE_API_TOKEN || loadTokenFromConfigFile() || null;
 
   return {
-    baseUrl: process.env.TELIQUE_API_BASE_URL || "https://api-dev.ringer.tel",
+    baseUrl: process.env.TELIQUE_API_BASE_URL || "https://api.telique.ringer.tel",
     apiToken,
     requestTimeoutMs: parseInt(
       process.env.TELIQUE_REQUEST_TIMEOUT_MS || "10000",

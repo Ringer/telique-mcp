@@ -445,7 +445,7 @@ The LSMS GraphQL API is a **completely separate implementation** from LERG Graph
 
 ## REST Paths for Direct API Access
 
-The MCP tools wrap these HTTP endpoints. Use this table when calling the Telique API directly with \`curl\` or another HTTP client. Base URL: \`https://api-dev.ringer.tel\`. Authentication: \`-H "x-api-token: tlq_…"\` (per-request header, never in query string).
+The MCP tools wrap these HTTP endpoints. Use this table when calling the Telique API directly with \`curl\` or another HTTP client. Base URL: \`https://api.telique.ringer.tel\`. Authentication: \`-H "x-api-token: tlq_…"\` (per-request header, never in query string).
 
 | Tool | Method | Path | Notes |
 |------|--------|------|-------|
