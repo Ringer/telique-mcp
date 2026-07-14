@@ -1,7 +1,7 @@
 const MAX_ITEMS = 50;
 
 const ANONYMOUS_NOTICE =
-  "\n\n---\n⚠ Anonymous mode (10 ops/min). Run `npx telique-mcp setup` or visit https://telique.ringer.tel for unlimited access.";
+  "\n\n---\n⚠ Anonymous mode (10 ops/min). Run `npx telique-mcp setup` or visit https://app.telique.ringer.tel for unlimited access.";
 
 let anonymous = false;
 let noticeShown = false;

@@ -17,7 +17,7 @@ The setup wizard detects your installed MCP clients and registers automatically.
 
 - **Node.js** 18 or later
 - **npm** 7 or later
-- An API key from [telique.ringer.tel](https://telique.ringer.tel) (optional — works in anonymous mode at 10 ops/min without one)
+- An API key from [app.telique.ringer.tel](https://app.telique.ringer.tel) (optional — works in anonymous mode at 10 ops/min without one)
 
 ## Setup Wizard
 
@@ -31,7 +31,7 @@ $ telique-mcp setup
   Do you have an API key?
 
   [1] Yes, I have one  → Enter it
-  [2] No, I need one   → Opens telique.ringer.tel in browser
+  [2] No, I need one   → Opens app.telique.ringer.tel in browser
   [3] Skip for now     → Use anonymous mode (10 ops/min)
 
   > 1
@@ -249,7 +249,7 @@ ChatGPT Desktop manages MCP servers through its UI, not a config file.
 
 ### Getting a key
 
-Visit [telique.ringer.tel](https://telique.ringer.tel) to create an account. All accounts include an API key.
+Visit [app.telique.ringer.tel](https://app.telique.ringer.tel) to create an account. All accounts include an API key.
 
 ### Anonymous mode
 
@@ -295,7 +295,7 @@ The server checks for a token in this order:
 Restart your MCP client. Most clients require a restart to pick up new MCP servers.
 
 **Getting 429 errors?**
-You're hitting the anonymous rate limit (10 ops/min). Get an API key at [telique.ringer.tel](https://telique.ringer.tel).
+You're hitting the anonymous rate limit (10 ops/min). Get an API key at [app.telique.ringer.tel](https://app.telique.ringer.tel).
 
 **Getting 403 errors?**
 Your API key is invalid or expired. Run `telique-mcp setup` to update it.
