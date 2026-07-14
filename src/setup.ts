@@ -430,7 +430,7 @@ async function validateToken(token: string): Promise<boolean> {
       apiToken: token,
       requestTimeoutMs: 10000,
     });
-    const result = await client.get("/v1/telique/lerg/tables");
+    const result = await client.get("/v1/lerg/tables");
     return (
       typeof result === "object" && result !== null && !("_error" in result)
     );

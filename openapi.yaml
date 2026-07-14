@@ -7,6 +7,10 @@ info:
     CNAM (Caller Name) identification, LERG (Local Exchange Routing Guide) infrastructure data,
     toll-free number routing via RouteLink, and GraphQL interfaces for advanced queries.
 
+    The short `/v1/{service}/…` paths documented here are the preferred form (since
+    2026-07-13). The older `/v1/telique/{service}/…` paths route identically and remain
+    fully supported for backwards compatibility.
+
     ## Authentication
 
     All endpoints require an API token passed via the `x-api-token` header.
@@ -56,7 +60,7 @@ tags:
 
 paths:
   # ── LRN ──────────────────────────────────────────────────────────
-  /v1/telique/lrn/{phone_number}:
+  /v1/lrn/{phone_number}:
     get:
       operationId: lrnLookup
       tags: [LRN]
@@ -91,7 +95,7 @@ paths:
         '429':
           description: Rate limit exceeded
 
-  /v1/telique/lsms/list/{resource}:
+  /v1/lsms/list/{resource}:
     get:
       operationId: lrnRelationshipQuery
       tags: [LRN]
@@ -137,7 +141,7 @@ paths:
                   count:
                     type: integer
 
-  /v1/telique/dno/{phone_number}:
+  /v1/dno/{phone_number}:
     get:
       operationId: dnoCheck
       tags: [LRN]
@@ -169,7 +173,7 @@ paths:
                 source: 'FTC'
 
   # ── CNAM ─────────────────────────────────────────────────────────
-  /v1/telique/cnam/{phone_number}:
+  /v1/cnam/{phone_number}:
     get:
       operationId: cnamLookup
       tags: [CNAM]
@@ -200,7 +204,7 @@ paths:
                 presentation_indicator: 'allowed'
 
   # ── LERG ─────────────────────────────────────────────────────────
-  /v1/telique/lerg/tables:
+  /v1/lerg/tables:
     get:
       operationId: lergListTables
       tags: [LERG]
@@ -219,7 +223,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/LergTableInfo'
 
-  /v1/telique/lerg/tables/{table_name}:
+  /v1/lerg/tables/{table_name}:
     get:
       operationId: lergTableInfo
       tags: [LERG]
@@ -243,7 +247,7 @@ paths:
         '404':
           description: Table not found
 
-  /v1/telique/lerg/{table_name}/{fields}/{query}:
+  /v1/lerg/{table_name}/{fields}/{query}:
     get:
       operationId: lergQuery
       tags: [LERG]
@@ -300,7 +304,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LergQueryResponse'
 
-  /v1/telique/lerg/query:
+  /v1/lerg/query:
     post:
       operationId: lergComplexQuery
       tags: [LERG]
@@ -344,7 +348,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LergQueryResponse'
 
-  /v1/telique/lerg/tandem:
+  /v1/lerg/tandem:
     get:
       operationId: lergTandem
       tags: [LERG]
@@ -405,7 +409,7 @@ paths:
                 $ref: '#/components/schemas/LergQueryResponse'
 
   # ── RouteLink ────────────────────────────────────────────────────
-  /v1/telique/ror/{crn}:
+  /v1/ror/{crn}:
     get:
       operationId: routelinkRorLookup
       tags: [RouteLink]
@@ -433,7 +437,7 @@ paths:
                 crn: '8005551234'
                 ror: 'ATX01'
 
-  /v1/telique/{lookup_type}/{crn}/{ani}/{lata}:
+  /v1/{lookup_type}/{crn}/{ani}/{lata}:
     get:
       operationId: routelinkCicLookup
       tags: [RouteLink]
@@ -486,7 +490,7 @@ paths:
                 cic: '0288'
                 ror: 'ATX01'
 
-  /v1/telique/ror/{ror}/{resource_type}:
+  /v1/ror/{ror}/{resource_type}:
     get:
       operationId: routelinkRorQuery
       tags: [RouteLink]
@@ -541,7 +545,7 @@ paths:
                   count:
                     type: integer
 
-  /v1/telique/cpr/{crn}:
+  /v1/cpr/{crn}:
     get:
       operationId: routelinkCpr
       tags: [RouteLink]
@@ -576,7 +580,7 @@ paths:
                 $ref: '#/components/schemas/CprResponse'
 
   # ── GraphQL ──────────────────────────────────────────────────────
-  /v1/telique/lsms/gql:
+  /v1/lsms/gql:
     post:
       operationId: graphqlLsms
       tags: [GraphQL]
@@ -608,7 +612,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GraphQLResponse'
 
-  /v1/telique/lerg/gql:
+  /v1/lerg/gql:
     post:
       operationId: graphqlLerg
       tags: [GraphQL]

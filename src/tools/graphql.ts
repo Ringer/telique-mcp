@@ -31,8 +31,8 @@ LERG (service='lerg'): Static telecom reference. Uses FilterInput with operators
     async ({ service, query, variables }) => {
       const path =
         service === "lsms"
-          ? "/v1/telique/lsms/gql"
-          : "/v1/telique/lerg/gql";
+          ? "/v1/lsms/gql"
+          : "/v1/lerg/gql";
 
       const body: Record<string, unknown> = { query };
       if (variables) body.variables = variables;

@@ -24,17 +24,17 @@ export function registerCompositeTools(
 
       const [lrn, cnam, dno, lerg] = await Promise.all([
         client
-          .get(`/v1/telique/lrn/${phone_number}`, { format: "json" })
+          .get(`/v1/lrn/${phone_number}`, { format: "json" })
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
-          .get(`/v1/telique/cnam/${phone_number}`)
+          .get(`/v1/cnam/${phone_number}`)
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
-          .get(`/v1/telique/dno/${phone_number}`, { format: "json" })
+          .get(`/v1/dno/${phone_number}`, { format: "json" })
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
           .get(
-            `/v1/telique/lerg/lerg_6/npa,nxx,loc_name,loc_state,lata,lata_name,ocn,switch,rc_abbre,rc_type/npa=${npa}%26nxx=${nxx}`,
+            `/v1/lerg/lerg_6/npa,nxx,loc_name,loc_state,lata,lata_name,ocn,switch,rc_abbre,rc_type/npa=${npa}%26nxx=${nxx}`,
             { limit: 5 }
           )
           .catch((err: Error) => ({ _error: true, message: err.message })),

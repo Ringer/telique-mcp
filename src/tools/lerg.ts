@@ -53,11 +53,11 @@ export function registerLergTools(
     async ({ table_name }) => {
       if (table_name) {
         const result = await client.get(
-          `/v1/telique/lerg/tables/${table_name}`
+          `/v1/lerg/tables/${table_name}`
         );
         return formatResponse(result);
       }
-      const result = await client.get("/v1/telique/lerg/tables");
+      const result = await client.get("/v1/lerg/tables");
       return formatResponse(result);
     }
   );
@@ -96,7 +96,7 @@ export function registerLergTools(
       // Encode & as %26 so multi-filters stay in the path segment
       const encodedQuery = query.replace(/&/g, "%26");
       const result = await client.get(
-        `/v1/telique/lerg/${table_name}/${fields}/${encodedQuery}`,
+        `/v1/lerg/${table_name}/${fields}/${encodedQuery}`,
         { limit, offset }
       );
       return formatResponse(result);
@@ -185,7 +185,7 @@ export function registerLergTools(
       if (fields) body.fields = fields;
       if (join) body.join = join;
 
-      const result = await client.post("/v1/telique/lerg/query", body);
+      const result = await client.post("/v1/lerg/query", body);
       return formatResponse(result);
     }
   );
@@ -244,7 +244,7 @@ export function registerLergTools(
       if (tandem) params.tandem = tandem;
       if (name) params.name = name;
 
-      const result = await client.get("/v1/telique/lerg/tandem", params);
+      const result = await client.get("/v1/lerg/tandem", params);
       return formatResponse(result);
     }
   );

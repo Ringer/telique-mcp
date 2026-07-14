@@ -19,7 +19,7 @@ export function registerLrnTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
-      const result = await client.get(`/v1/telique/lrn/${phone_number}`, {
+      const result = await client.get(`/v1/lrn/${phone_number}`, {
         format: "json",
       });
       return formatResponse(result);
@@ -63,7 +63,7 @@ export function registerLrnTools(
       }
 
       const result = await client.get(
-        `/v1/telique/lsms/list/${route.resource}`,
+        `/v1/lsms/list/${route.resource}`,
         { [route.param]: value }
       );
       return formatResponse(result);
@@ -81,7 +81,7 @@ export function registerLrnTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
-      const result = await client.get(`/v1/telique/dno/${phone_number}`, {
+      const result = await client.get(`/v1/dno/${phone_number}`, {
         format: "json",
       });
       return formatResponse(result);
