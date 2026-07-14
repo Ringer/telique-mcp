@@ -47,9 +47,9 @@ export function registerRoutelinkTools(
 
       let path: string;
       if (lookup_type === "ror") {
-        path = `/v1/telique/ror/${crn}`;
+        path = `/v1/ror/${crn}`;
       } else {
-        path = `/v1/telique/${lookup_type}/${crn}/${ani}/${lata}`;
+        path = `/v1/${lookup_type}/${crn}/${ani}/${lata}`;
       }
 
       const result = await client.get(path, { format: "json" });
@@ -85,7 +85,7 @@ export function registerRoutelinkTools(
     READ_ONLY_ANNOTATIONS,
     async ({ ror, resource_type, limit, offset }) => {
       const result = await client.get(
-        `/v1/telique/ror/${ror}/${resource_type}`,
+        `/v1/ror/${ror}/${resource_type}`,
         { format: "json", limit, offset }
       );
       return formatResponse(result);
@@ -111,9 +111,7 @@ export function registerRoutelinkTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ crn, expand }) => {
-      // NOTE: /v1/telique/cpr/* path pending frontend URL map addition.
-      // Falls back to /cpr/ which routes to routelink via default backend.
-      const result = await client.get(`/v1/telique/cpr/${crn}`, {
+      const result = await client.get(`/v1/cpr/${crn}`, {
         format: "json",
         expand: expand ? "true" : "false",
       });

@@ -29,7 +29,7 @@ function parseYamlLite(content: string): Record<string, unknown> {
   let currentPath: string | null = null;
 
   for (const line of content.split("\n")) {
-    // Match top-level paths like "  /v1/telique/lrn/{phone_number}:"
+    // Match top-level paths like "  /v1/lrn/{phone_number}:"
     const pathMatch = line.match(/^  (\/[^:]+):/);
     if (pathMatch) {
       currentPath = pathMatch[1];
@@ -165,21 +165,21 @@ if (paths.length < 13) {
 // LRN, CNAM, DNO, LERG). No server-side composite endpoint exists, so it
 // is intentionally absent from openapi.yaml.
 const expectedPaths = [
-  "/v1/telique/lrn/{phone_number}",
-  "/v1/telique/lsms/list/{resource}",
-  "/v1/telique/dno/{phone_number}",
-  "/v1/telique/cnam/{phone_number}",
-  "/v1/telique/lerg/tables",
-  "/v1/telique/lerg/tables/{table_name}",
-  "/v1/telique/lerg/{table_name}/{fields}/{query}",
-  "/v1/telique/lerg/query",
-  "/v1/telique/lerg/tandem",
-  "/v1/telique/ror/{crn}",
-  "/v1/telique/{lookup_type}/{crn}/{ani}/{lata}",
-  "/v1/telique/ror/{ror}/{resource_type}",
-  "/v1/telique/cpr/{crn}",
-  "/v1/telique/lsms/gql",
-  "/v1/telique/lerg/gql",
+  "/v1/lrn/{phone_number}",
+  "/v1/lsms/list/{resource}",
+  "/v1/dno/{phone_number}",
+  "/v1/cnam/{phone_number}",
+  "/v1/lerg/tables",
+  "/v1/lerg/tables/{table_name}",
+  "/v1/lerg/{table_name}/{fields}/{query}",
+  "/v1/lerg/query",
+  "/v1/lerg/tandem",
+  "/v1/ror/{crn}",
+  "/v1/{lookup_type}/{crn}/{ani}/{lata}",
+  "/v1/ror/{ror}/{resource_type}",
+  "/v1/cpr/{crn}",
+  "/v1/lsms/gql",
+  "/v1/lerg/gql",
 ];
 
 for (const expected of expectedPaths) {

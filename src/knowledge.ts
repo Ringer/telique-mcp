@@ -179,7 +179,7 @@ The LRN API serves live NPAC porting data from an in-memory Judy Array store (50
 
 ### LRN Lookup (\`lrn_lookup\` tool)
 
-\`GET /v1/telique/lrn/{phone_number}?format=json\`
+\`GET /v1/lrn/{phone_number}?format=json\`
 
 Returns the current LRN and carrier for a phone number. This is the fastest lookup — served from in-memory store, not PostgreSQL.
 
@@ -209,12 +209,12 @@ Query relationships between phone numbers, LRNs, and SPIDs from the LSMS Postgre
 
 | query_type | Endpoint | Description |
 |------------|----------|-------------|
-| \`phones_by_lrn\` | \`GET /v1/telique/lsms/list/phone_number?lrn={value}\` | All phone numbers for a given LRN |
-| \`phones_by_spid\` | \`GET /v1/telique/lsms/list/phone_number?spid={value}\` | All phone numbers for a given SPID |
-| \`spid_by_lrn\` | \`GET /v1/telique/lsms/list/spid?lrn={value}\` | All SPIDs associated with a given LRN |
-| \`spid_by_phone\` | \`GET /v1/telique/lsms/list/spid?phone_number={value}\` | All SPIDs for a given phone number |
-| \`lrn_by_spid\` | \`GET /v1/telique/lsms/list/lrn?spid={value}\` | All LRNs for a given SPID |
-| \`lrn_by_phone\` | \`GET /v1/telique/lsms/list/lrn?phone_number={value}\` | All LRNs for a given phone number |
+| \`phones_by_lrn\` | \`GET /v1/lsms/list/phone_number?lrn={value}\` | All phone numbers for a given LRN |
+| \`phones_by_spid\` | \`GET /v1/lsms/list/phone_number?spid={value}\` | All phone numbers for a given SPID |
+| \`spid_by_lrn\` | \`GET /v1/lsms/list/spid?lrn={value}\` | All SPIDs associated with a given LRN |
+| \`spid_by_phone\` | \`GET /v1/lsms/list/spid?phone_number={value}\` | All SPIDs for a given phone number |
+| \`lrn_by_spid\` | \`GET /v1/lsms/list/lrn?spid={value}\` | All LRNs for a given SPID |
+| \`lrn_by_phone\` | \`GET /v1/lsms/list/lrn?phone_number={value}\` | All LRNs for a given phone number |
 
 **Constraints:**
 - Exactly ONE query parameter per request (multiple parameters return a validation error)
@@ -447,25 +447,27 @@ The LSMS GraphQL API is a **completely separate implementation** from LERG Graph
 
 The MCP tools wrap these HTTP endpoints. Use this table when calling the Telique API directly with \`curl\` or another HTTP client. Base URL: \`https://api.telique.ringer.tel\`. Authentication: \`-H "x-api-token: tlq_…"\` (per-request header, never in query string).
 
+**Path forms:** the short \`/v1/{service}/…\` paths below are the preferred form (since 2026-07-13). The older \`/v1/telique/{service}/…\` paths route identically and remain fully supported for backwards compatibility — prepend \`/telique\` after \`/v1\` to any path in this table.
+
 | Tool | Method | Path | Notes |
 |------|--------|------|-------|
-| \`lrn_lookup\` | GET | \`/v1/telique/lrn/{phone_number}\` | Add \`?format=json\` for structured response; default is \`LRN;SPID\` plain text |
-| \`cnam_lookup\` | GET | \`/v1/telique/cnam/{phone_number}\` | Returns calling_name, presentation_indicator |
-| \`dno_check\` | GET | \`/v1/telique/dno/{phone_number}\` | Add \`?format=json\` for details; default is \`true\`/\`false\` text |
-| \`lrn_relationship_query\` | GET | \`/v1/telique/lsms/list/{resource}?{filter}={value}\` | \`resource\` ∈ {phone_number, spid, lrn}; filter ∈ {lrn, spid, phone_number}; exactly one filter |
-| \`lerg_table_info\` | GET | \`/v1/telique/lerg/tables\` or \`/v1/telique/lerg/tables/{table_name}\` | No args = list all tables |
-| \`lerg_query\` | GET | \`/v1/telique/lerg/{table_name}/{fields}/{query}\` | Example: \`/lerg/lerg_6/npa,nxx,ocn/npa=303&nxx=629\` |
-| \`lerg_complex_query\` | POST | \`/v1/telique/lerg/query\` | JSON body with table, fields, filters, join, limit, offset |
-| \`lerg_tandem\` | GET | \`/v1/telique/lerg/tandem?npa={npa}&nxx={nxx}\` | Pre-joined tandem lookup |
-| \`routelink_lookup\` (ror) | GET | \`/v1/telique/ror/{crn}\` | Responsible Organization for a toll-free number |
-| \`routelink_lookup\` (cic/cicror) | GET | \`/v1/telique/{cic\\|cicror}/{crn}/{ani}/{lata}\` | CIC or CIC+ROR for a toll-free call |
-| \`routelink_ror_query\` | GET | \`/v1/telique/ror/{ror}/{tfns\\|cprs}\` | List TFNs or CPRs for a ROR; paginated \`?limit=&offset=\` |
-| \`routelink_cpr\` | GET | \`/v1/telique/cpr/{crn}\` | Call Processing Record; add \`?expand=true\` to inline templates |
-| \`graphql_query\` (lerg) | POST | \`/v1/telique/lerg/gql\` | JSON body \`{"query":"..."}\`; GET returns GraphiQL playground HTML |
-| \`graphql_query\` (lsms) | POST | \`/v1/telique/lsms/gql\` | JSON body \`{"query":"..."}\`; GET returns GraphiQL playground HTML |
+| \`lrn_lookup\` | GET | \`/v1/lrn/{phone_number}\` | Add \`?format=json\` for structured response; default is \`LRN;SPID\` plain text |
+| \`cnam_lookup\` | GET | \`/v1/cnam/{phone_number}\` | Returns calling_name, presentation_indicator |
+| \`dno_check\` | GET | \`/v1/dno/{phone_number}\` | Add \`?format=json\` for details; default is \`true\`/\`false\` text |
+| \`lrn_relationship_query\` | GET | \`/v1/lsms/list/{resource}?{filter}={value}\` | \`resource\` ∈ {phone_number, spid, lrn}; filter ∈ {lrn, spid, phone_number}; exactly one filter |
+| \`lerg_table_info\` | GET | \`/v1/lerg/tables\` or \`/v1/lerg/tables/{table_name}\` | No args = list all tables |
+| \`lerg_query\` | GET | \`/v1/lerg/{table_name}/{fields}/{query}\` | Example: \`/lerg/lerg_6/npa,nxx,ocn/npa=303&nxx=629\` |
+| \`lerg_complex_query\` | POST | \`/v1/lerg/query\` | JSON body with table, fields, filters, join, limit, offset |
+| \`lerg_tandem\` | GET | \`/v1/lerg/tandem?npa={npa}&nxx={nxx}\` | Pre-joined tandem lookup |
+| \`routelink_lookup\` (ror) | GET | \`/v1/ror/{crn}\` | Responsible Organization for a toll-free number |
+| \`routelink_lookup\` (cic/cicror) | GET | \`/v1/{cic\\|cicror}/{crn}/{ani}/{lata}\` | CIC or CIC+ROR for a toll-free call |
+| \`routelink_ror_query\` | GET | \`/v1/ror/{ror}/{tfns\\|cprs}\` | List TFNs or CPRs for a ROR; paginated \`?limit=&offset=\` |
+| \`routelink_cpr\` | GET | \`/v1/cpr/{crn}\` | Call Processing Record; add \`?expand=true\` to inline templates |
+| \`graphql_query\` (lerg) | POST | \`/v1/lerg/gql\` | JSON body \`{"query":"..."}\`; GET returns GraphiQL playground HTML |
+| \`graphql_query\` (lsms) | POST | \`/v1/lsms/gql\` | JSON body \`{"query":"..."}\`; GET returns GraphiQL playground HTML |
 | \`lookup_tn\` | — | (composite) | Not a single endpoint — fans out to \`/lrn/\`, \`/cnam/\`, \`/dno/\`, \`/lerg/…\` in parallel |
 
-**Note on RouteLink paths**: there is NO \`/routelink/\` segment. The public OpenAPI spec at \`https://telique.ringer.tel/docs/api-reference\` historically listed \`/v1/telique/routelink/cpr/{crn}\` etc. — those paths return 404. The real paths are bare (\`/v1/telique/cpr/{crn}\`) as shown above.
+**Note on RouteLink paths**: there is NO \`/routelink/\` segment. The public OpenAPI spec at \`https://telique.ringer.tel/docs/api-reference\` historically listed \`/v1/telique/routelink/cpr/{crn}\` etc. — those paths return 404. The real paths are bare (\`/v1/cpr/{crn}\`) as shown above.
 
 ---
 

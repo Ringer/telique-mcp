@@ -19,7 +19,7 @@ export function registerCnamTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
-      const result = await client.get(`/v1/telique/cnam/${phone_number}`);
+      const result = await client.get(`/v1/cnam/${phone_number}`);
       return formatResponse(result);
     }
   );
