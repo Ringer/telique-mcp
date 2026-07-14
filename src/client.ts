@@ -112,7 +112,7 @@ export class TeliqueClient {
       case 429:
         return this.apiToken
           ? "Rate limit exceeded"
-          : "Rate limit exceeded (10 ops/min in anonymous mode). Run `npx telique-mcp setup` or visit https://telique.ringer.tel to get an API key for unlimited access.";
+          : "Rate limit exceeded (10 ops/min in anonymous mode). Run `npx telique-mcp setup` or visit https://app.telique.ringer.tel to get an API key for unlimited access.";
       case 502:
       case 503:
         return "Service temporarily unavailable";

@@ -17,7 +17,7 @@ info:
     Anonymous access is available with a rate limit of 10 requests per minute.
     Authenticated access provides higher rate limits based on your subscription.
 
-    Get your API token at [telique.ringer.tel](https://telique.ringer.tel).
+    Get your API token at [app.telique.ringer.tel](https://app.telique.ringer.tel).
 
     ## MCP Server
 
@@ -649,7 +649,7 @@ components:
       in: header
       name: x-api-token
       description: |
-        API token for authentication. Get yours at [telique.ringer.tel](https://telique.ringer.tel).
+        API token for authentication. Get yours at [app.telique.ringer.tel](https://app.telique.ringer.tel).
         Anonymous access (no token) is rate-limited to 10 requests per minute.
 
   schemas:
