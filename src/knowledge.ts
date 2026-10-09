@@ -476,7 +476,7 @@ The MCP tools wrap these HTTP endpoints. Use this table when calling the Telique
 | Status | \`code\` | Meaning | What to tell the user |
 |--------|--------|---------|------------------------|
 | 403 | \`INVALID_TOKEN\` | No token, or one the API doesn't recognize | Configure a key (\`npx telique-mcp setup\`); free accounts get one |
-| 403 | \`SCOPE_DENIED\` | Token is valid but not authorized for this tool | Add the tool's scope to the key at telique.ringer.tel |
+| 403 | \`SCOPE_DENIED\` | Token is valid but not authorized for this tool | Add the tool's scope to the key at app.telique.ringer.tel |
 | 403 | \`MALFORMED_PATH\` | Path has a \`.\`/\`..\` segment or an encoded \`.\`/\`/\` | Fix the input; values must not contain \`/\` |
 | 403 | \`FORBIDDEN\` | Method other than GET/POST, or no matching route | Use the paths above |
 | 429 | \`RATE_LIMITED\` | Over the key's rate limit | Wait \`Retry-After\` seconds. Free keys: 10 requests per 60 s, and going over blocks the key for the rest of the window |

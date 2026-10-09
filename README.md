@@ -57,7 +57,7 @@ Once installed, just ask your AI assistant:
 
 ## API Key
 
-Works without an API key at 10 operations per minute. For unlimited access, get a key at [telique.ringer.tel](https://telique.ringer.tel).
+An API key is required. Every account includes one, free accounts too: get yours at [app.telique.ringer.tel](https://app.telique.ringer.tel). Free-account keys allow 10 requests per 60 seconds.
 
 Enter your key during setup or update it later by running `telique-mcp setup` again.
 
