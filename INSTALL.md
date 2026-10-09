@@ -17,7 +17,7 @@ The setup wizard detects your installed MCP clients and registers automatically.
 
 - **Node.js** 18 or later
 - **npm** 7 or later
-- An API key from [telique.ringer.tel](https://telique.ringer.tel) (optional — works in anonymous mode at 10 ops/min without one)
+- An API key from [telique.ringer.tel](https://telique.ringer.tel). Every account includes one, free accounts too. The API refuses requests without a key.
 
 ## Setup Wizard
 
@@ -32,7 +32,7 @@ $ telique-mcp setup
 
   [1] Yes, I have one  → Enter it
   [2] No, I need one   → Opens telique.ringer.tel in browser
-  [3] Skip for now     → Use anonymous mode (10 ops/min)
+  [3] Skip for now     → Add a key later (tools need one to work)
 
   > 1
 
@@ -82,9 +82,6 @@ telique-mcp setup   # select Claude Code when prompted
 ```bash
 # With API key
 claude mcp add -s user telique-local -e TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
-
-# Anonymous mode
-claude mcp add -s user telique-local -- npx -y telique-mcp
 ```
 
 Restart Claude Code to load the tools. Verify with `/mcp`.
@@ -125,7 +122,7 @@ Add the `telique-local` entry under `mcpServers`:
 }
 ```
 
-Omit the `env` block to use anonymous mode. Restart Claude Desktop.
+Restart Claude Desktop.
 
 ---
 
@@ -155,7 +152,7 @@ Edit `~/.cursor/mcp.json` (same path on all platforms):
 }
 ```
 
-Omit the `env` block to use anonymous mode. Restart Cursor.
+Restart Cursor.
 
 ---
 
@@ -193,7 +190,7 @@ Add the entry under `github.copilot.chat.mcp.servers`:
 }
 ```
 
-Omit the `env` block to use anonymous mode. Reload VS Code.
+Reload VS Code.
 
 ---
 
@@ -216,15 +213,12 @@ telique-mcp setup   # select the Codex entry when prompted
 ```bash
 # With API key
 codex mcp add telique-local --env TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
-
-# Anonymous mode
-codex mcp add telique-local -- npx -y telique-mcp
 ```
 
 If you only have Codex Desktop and no `codex` binary on `PATH`, run the bundled binary by absolute path:
 
 ```bash
-/Applications/Codex.app/Contents/Resources/codex mcp add telique-local -- npx -y telique-mcp
+/Applications/Codex.app/Contents/Resources/codex mcp add telique-local --env TELIQUE_API_TOKEN=your-key-here -- npx -y telique-mcp
 ```
 
 Restart Codex (or quit and relaunch the Desktop app) to pick up the new server.
@@ -251,9 +245,9 @@ ChatGPT Desktop manages MCP servers through its UI, not a config file.
 
 Visit [telique.ringer.tel](https://telique.ringer.tel) to create an account. All accounts include an API key.
 
-### Anonymous mode
+### Rate limits
 
-Telique MCP works without an API key at a rate limit of 10 operations per minute. The first tool response will include a notice about the limit.
+Keys on free accounts allow 10 requests per 60 seconds; going over blocks the key for the rest of the 60-second window. Paid keys allow 1,000 requests per second. There is no anonymous access: without a key, every tool returns an error.
 
 ### Updating your key
 
@@ -269,7 +263,7 @@ The server checks for a token in this order:
 
 1. `TELIQUE_API_TOKEN` environment variable (set by MCP client config)
 2. `~/.telique/config.json` file (written by the setup wizard)
-3. No token → anonymous mode (10 ops/min)
+3. No token → tools return an "API token required" error
 
 ## Available Tools
 
@@ -295,10 +289,15 @@ The server checks for a token in this order:
 Restart your MCP client. Most clients require a restart to pick up new MCP servers.
 
 **Getting 429 errors?**
-You're hitting the anonymous rate limit (10 ops/min). Get an API key at [telique.ringer.tel](https://telique.ringer.tel).
+Your key is over its rate limit. Free keys allow 10 requests per 60 seconds and are blocked for the rest of the window once they go over. Wait the number of seconds the error gives, or upgrade at [telique.ringer.tel](https://telique.ringer.tel).
 
 **Getting 403 errors?**
-Your API key is invalid or expired. Run `telique-mcp setup` to update it.
+The error message says which kind:
+- *API token not recognized / no API token configured* (`INVALID_TOKEN`): the key is missing, invalid or revoked. Run `telique-mcp setup` to update it.
+- *Not authorized for this tool* (`SCOPE_DENIED`): the key is valid but doesn't include this tool's scope. Add the scope to the key at [telique.ringer.tel](https://telique.ringer.tel).
+- *Refused the request path* (`MALFORMED_PATH`): an input value contained `/` or a `.`/`..` segment.
+
+Each error includes a request ID. Quote it when contacting support.
 
 **Server not starting?**
 Ensure Node.js 18+ is installed: `node --version`

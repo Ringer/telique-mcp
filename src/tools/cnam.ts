@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse } from "../utils/formatting.js";
 import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
+import { apiPath } from "../utils/paths.js";
 
 export function registerCnamTools(
   server: McpServer,
@@ -19,7 +20,7 @@ export function registerCnamTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
-      const result = await client.get(`/v1/cnam/${phone_number}`);
+      const result = await client.get(apiPath("cnam", phone_number));
       return formatResponse(result);
     }
   );

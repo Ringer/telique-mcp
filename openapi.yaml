@@ -13,11 +13,31 @@ info:
 
     ## Authentication
 
-    All endpoints require an API token passed via the `x-api-token` header.
-    Anonymous access is available with a rate limit of 10 requests per minute.
-    Authenticated access provides higher rate limits based on your subscription.
+    All endpoints require an API token passed via the `x-api-token` header. A
+    request without a valid token is refused with `403 INVALID_TOKEN`, unless it
+    comes from an allowlisted IP address.
+
+    Keys on free accounts are limited to 10 requests per 60 seconds; going over
+    blocks the key for the rest of the 60-second window. Paid keys are limited to
+    1,000 requests per second, and excess requests are throttled rather than blocked.
 
     Get your API token at [telique.ringer.tel](https://telique.ringer.tel).
+
+    ## Errors
+
+    Every response carries an `x-telique-request-id` header. A request refused by
+    the API gateway gets a JSON body
+    `{"success": false, "code": "...", "message": "...", "request_id": "..."}`,
+    where `request_id` matches the header. Quote it when contacting support.
+
+    | Status | `code` | Meaning |
+    |--------|--------|---------|
+    | 403 | `INVALID_TOKEN` | No token, or a token the API does not recognize |
+    | 403 | `SCOPE_DENIED` | The token is valid but not authorized for this endpoint |
+    | 403 | `MALFORMED_PATH` | The path has a `.` or `..` segment, or a percent-encoded `.` or `/` |
+    | 403 | `FORBIDDEN` | Method other than GET or POST, or a path that matches no route |
+    | 429 | `RATE_LIMITED` | Rate limit exceeded; wait the number of seconds in `Retry-After` |
+    | 502/503 | `UPSTREAM_UNAVAILABLE` | The service behind the endpoint is unavailable; retry |
 
     ## MCP Server
 
@@ -92,8 +112,10 @@ paths:
                 lnp_type: '1'
         '404':
           description: Phone number not found in LSMS
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '429':
-          description: Rate limit exceeded
+          $ref: '#/components/responses/RateLimited'
 
   /v1/lsms/list/{resource}:
     get:
@@ -140,6 +162,10 @@ paths:
                       type: object
                   count:
                     type: integer
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/dno/{phone_number}:
     get:
@@ -171,6 +197,10 @@ paths:
                 is_dno: true
                 matched_pattern: '8002829500'
                 source: 'FTC'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   # ── CNAM ─────────────────────────────────────────────────────────
   /v1/cnam/{phone_number}:
@@ -202,6 +232,10 @@ paths:
                 calling_name: 'SMITH JOHN'
                 calling_name_status: 'available'
                 presentation_indicator: 'allowed'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   # ── LERG ─────────────────────────────────────────────────────────
   /v1/lerg/tables:
@@ -212,7 +246,7 @@ paths:
       description: |
         Returns metadata for all 27 LERG tables. Key tables: lerg_1 (OCN/carrier directory),
         lerg_6 (NPA-NXX block assignments), lerg_7 (switch details),
-        lerg_7_sha (switch homing arrangements/tandems), lerg_12 (LRN registry).
+        lerg_7_sha (switch homing arrangements/tandems), lerg12 (LRN registry).
       responses:
         '200':
           description: List of LERG tables with metadata
@@ -222,6 +256,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LergTableInfo'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/lerg/tables/{table_name}:
     get:
@@ -236,6 +274,7 @@ paths:
           description: "Table name (e.g. lerg_1, lerg_6, lerg_7_sha)"
           schema:
             type: string
+            enum: [lerg_1, lerg_1_con, lerg_2, lerg_3, lerg_4, lerg_5, lerg_6, lerg_6_atc, lerg_6_ins, lerg_6_odd, lerg_7, lerg_7_ins, lerg_7_sha, lerg_7_sha_ins, lerg_8, lerg_8_lir, lerg_8_loc, lerg_8_pst, lerg_9, lerg_9_atc, lerg10, lerg11, lerg12, lerg12_ins, lerg16, lerg17, lergdate]
             example: lerg_6
       responses:
         '200':
@@ -246,6 +285,10 @@ paths:
                 $ref: '#/components/schemas/LergTableInfo'
         '404':
           description: Table not found
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/lerg/{table_name}/{fields}/{query}:
     get:
@@ -257,7 +300,7 @@ paths:
         - Carrier by OCN: `lerg_1/ocn_num,ocn_name,ocn_state/ocn_num=9545`
         - NPA-NXX info: `lerg_6/npa,nxx,loc_name,ocn,switch,lata/npa=303&nxx=629`
         - Switch details: `lerg_7/switch,ocn,aocn/switch=DNVRCOMADS0`
-        - LRN registry: `lerg_12/lrn,lata,switch,ocn/lrn=7207081999`
+        - LRN registry: `lerg12/lrn,lata,switch,ocn/lrn=7207081999`
 
         Multiple filters are joined with `&` in the query path segment.
       parameters:
@@ -267,17 +310,19 @@ paths:
           description: Table to query (e.g. lerg_1, lerg_6, lerg_7)
           schema:
             type: string
+            enum: [lerg_1, lerg_1_con, lerg_2, lerg_3, lerg_4, lerg_5, lerg_6, lerg_6_atc, lerg_6_ins, lerg_6_odd, lerg_7, lerg_7_ins, lerg_7_sha, lerg_7_sha_ins, lerg_8, lerg_8_lir, lerg_8_loc, lerg_8_pst, lerg_9, lerg_9_atc, lerg10, lerg11, lerg12, lerg12_ins, lerg16, lerg17, lergdate]
         - name: fields
           in: path
           required: true
-          description: Comma-separated field names to return
+          description: Comma-separated field names to return, or `*` for all fields
           schema:
             type: string
+            pattern: '^(\*|[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*)$'
             example: 'npa,nxx,loc_name,ocn,switch,lata'
         - name: query
           in: path
           required: true
-          description: "Filter in field=value format, multiple filters joined with & (URL-encoded as %26)"
+          description: "Filter in field=value format, multiple filters joined with & sent as %26 so they stay in this path segment. Percent-encode values; a value may not contain / (the API refuses %2F in paths)."
           schema:
             type: string
             example: 'npa=303%26nxx=629'
@@ -303,6 +348,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LergQueryResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/lerg/query:
     post:
@@ -347,6 +396,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LergQueryResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/lerg/tandem:
     get:
@@ -407,6 +460,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LergQueryResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   # ── RouteLink ────────────────────────────────────────────────────
   /v1/ror/{crn}:
@@ -436,24 +493,69 @@ paths:
               example:
                 crn: '8005551234'
                 ror: 'ATX01'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
-  /v1/{lookup_type}/{crn}/{ani}/{lata}:
+  /v1/cic/{crn}/{ani}/{lata}:
     get:
       operationId: routelinkCicLookup
       tags: [RouteLink]
       summary: Look up toll-free carrier routing
       description: |
         Resolves a toll-free number (CRN) to its carrier (CIC) by interpreting the CPR
-        decision tree using the caller's ANI and LATA. Use `cicror` to get both CIC and ROR
-        in a single request.
+        decision tree using the caller's ANI and LATA. Use `/v1/cicror/…` to get both
+        CIC and ROR in a single request.
       parameters:
-        - name: lookup_type
+        - name: crn
           in: path
           required: true
-          description: "Type of lookup: cic (carrier only) or cicror (carrier + responsible org)"
+          description: 10-digit toll-free number (CRN)
           schema:
             type: string
-            enum: [cic, cicror]
+            pattern: '^\d{10}$'
+            example: '8005551234'
+        - name: ani
+          in: path
+          required: true
+          description: 10-digit calling party number
+          schema:
+            type: string
+            pattern: '^\d{10}$'
+            example: '3035551234'
+        - name: lata
+          in: path
+          required: true
+          description: 3-digit LATA code
+          schema:
+            type: string
+            pattern: '^\d{3}$'
+            example: '656'
+      responses:
+        '200':
+          description: Carrier routing result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CicLookupResponse'
+              example:
+                crn: '8005551234'
+                cic: '0288'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /v1/cicror/{crn}/{ani}/{lata}:
+    get:
+      operationId: routelinkCicRorLookup
+      tags: [RouteLink]
+      summary: Look up toll-free carrier routing and responsible org
+      description: |
+        Same as `/v1/cic/…`, and also returns the Responsible Organization (ROR) for the
+        toll-free number.
+      parameters:
         - name: crn
           in: path
           required: true
@@ -489,6 +591,10 @@ paths:
                 crn: '8005551234'
                 cic: '0288'
                 ror: 'ATX01'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/ror/{ror}/{resource_type}:
     get:
@@ -544,6 +650,10 @@ paths:
                       type: object
                   count:
                     type: integer
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/cpr/{crn}:
     get:
@@ -578,6 +688,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CprResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   # ── GraphQL ──────────────────────────────────────────────────────
   /v1/lsms/gql:
@@ -611,6 +725,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GraphQLResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
   /v1/lerg/gql:
     post:
@@ -641,8 +759,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GraphQLResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 
 components:
+  responses:
+    Forbidden:
+      description: |
+        Refused by the API gateway. `code` is INVALID_TOKEN, SCOPE_DENIED,
+        MALFORMED_PATH or FORBIDDEN; see Errors in the API description.
+      headers:
+        x-telique-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayError'
+          example:
+            success: false
+            code: SCOPE_DENIED
+            message: This API token is not authorized for this endpoint.
+            request_id: 01M4GYN597F0R90WS1Q8AFT9QP
+    RateLimited:
+      description: Rate limit exceeded. Retry after the number of seconds in `Retry-After`.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+        x-telique-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayError'
+
+  headers:
+    RequestId:
+      description: Identifies the request in the API's access log. Quote it to support.
+      schema:
+        type: string
+
   securitySchemes:
     apiToken:
       type: apiKey
@@ -650,9 +809,25 @@ components:
       name: x-api-token
       description: |
         API token for authentication. Get yours at [telique.ringer.tel](https://telique.ringer.tel).
-        Anonymous access (no token) is rate-limited to 10 requests per minute.
+        Required on every request unless it comes from an allowlisted IP address.
 
   schemas:
+    GatewayError:
+      type: object
+      required: [success, code, message, request_id]
+      properties:
+        success:
+          type: boolean
+          const: false
+        code:
+          type: string
+          enum: [INVALID_TOKEN, SCOPE_DENIED, MALFORMED_PATH, FORBIDDEN, RATE_LIMITED, UPSTREAM_UNAVAILABLE]
+        message:
+          type: string
+        request_id:
+          type: string
+          description: Same value as the `x-telique-request-id` response header
+
     LrnLookupResponse:
       type: object
       properties:

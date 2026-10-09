@@ -4,6 +4,8 @@ import { execSync, execFileSync } from "node:child_process";
 import { stdin, stdout } from "node:process";
 import { CONFIG_DIR, CONFIG_FILE } from "./config.js";
 import { TeliqueClient } from "./client.js";
+import { isApiError } from "./types.js";
+import { apiPath } from "./utils/paths.js";
 import { ICON_DARK_DATA_URI } from "./icons.js";
 
 const REGISTER_URL = "https://telique.ringer.tel/register";
@@ -30,7 +32,7 @@ export async function runSetup(): Promise<void> {
   console.log("  Do you have an API key?\n");
   console.log("  [1] Yes, I have one  → Enter it");
   console.log("  [2] No, I need one   → Opens telique.ringer.tel in browser");
-  console.log("  [3] Skip for now     → Use anonymous mode (10 ops/min)");
+  console.log("  [3] Skip for now     → Add a key later (tools need one to work)");
   console.log();
 
   const choice = await rl.question("  > ");
@@ -46,18 +48,20 @@ export async function runSetup(): Promise<void> {
       }
 
       console.log("\n  Validating...");
-      const valid = await validateToken(trimmed);
-      if (!valid) {
-        console.log(
-          "  ✗ Token validation failed. The API returned an error."
-        );
+      const check = await validateToken(trimmed);
+      if (check.result === "invalid") {
+        console.log("  ✗ The API did not recognize this key.");
         console.log("  Check your token and try again.\n");
         rl.close();
         process.exit(1);
       }
 
       saveToken(trimmed);
-      console.log(`  ✓ Token validated`);
+      if (check.result === "valid") {
+        console.log(`  ✓ Token validated`);
+      } else {
+        console.log(`  ! Saved without validating: ${check.detail}`);
+      }
       console.log(`  ✓ Saved to ${CONFIG_FILE}`);
       await registerWithClients(rl, trimmed);
       break;
@@ -74,7 +78,8 @@ export async function runSetup(): Promise<void> {
 
     case "3":
     default: {
-      console.log("\n  ✓ Skipped. Running in anonymous mode (10 ops/min).");
+      console.log("\n  ✓ Skipped. The Telique API requires a key, so tools will");
+      console.log("    return an error until you add one (free accounts get a key).");
       console.log(`  Get an API key anytime at ${REGISTER_URL}`);
       await registerWithClients(rl, null);
       break;
@@ -420,22 +425,33 @@ function saveToken(token: string): void {
   writeFileSync(CONFIG_FILE, JSON.stringify(existing, null, 2) + "\n");
 }
 
-async function validateToken(token: string): Promise<boolean> {
+type TokenCheck =
+  | { result: "valid" }
+  | { result: "invalid" }
+  | { result: "unverified"; detail: string };
+
+async function validateToken(token: string): Promise<TokenCheck> {
   // Dip a documented, token-required endpoint. /health is an internal probe
   // not in openapi.yaml and returns 403 from non-allowlisted IPs, which
   // would falsely reject valid tokens during setup.
-  try {
-    const client = new TeliqueClient({
-      baseUrl: API_BASE_URL,
-      apiToken: token,
-      requestTimeoutMs: 10000,
-    });
-    const result = await client.get("/v1/lerg/tables");
-    return (
-      typeof result === "object" && result !== null && !("_error" in result)
-    );
-  } catch {
-    return false;
+  const client = new TeliqueClient({
+    baseUrl: API_BASE_URL,
+    apiToken: token,
+    requestTimeoutMs: 10000,
+  });
+  const result = await client.get(apiPath("lerg", "tables"));
+  if (!isApiError(result)) return { result: "valid" };
+
+  switch (result.code) {
+    case "INVALID_TOKEN":
+      return { result: "invalid" };
+    // The gateway only gets to scope and rate checks after it has
+    // recognized the token, so both mean the key itself is good.
+    case "SCOPE_DENIED":
+    case "RATE_LIMITED":
+      return { result: "valid" };
+    default:
+      return { result: "unverified", detail: result.message };
   }
 }
 

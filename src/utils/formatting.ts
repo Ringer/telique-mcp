@@ -1,37 +1,16 @@
+import { isApiError } from "../types.js";
+
 const MAX_ITEMS = 50;
-
-const ANONYMOUS_NOTICE =
-  "\n\n---\n⚠ Anonymous mode (10 ops/min). Run `npx telique-mcp setup` or visit https://telique.ringer.tel for unlimited access.";
-
-let anonymous = false;
-let noticeShown = false;
-
-export function setAnonymousMode(isAnonymous: boolean): void {
-  anonymous = isAnonymous;
-}
-
-interface ErrorResponse {
-  _error: true;
-  status: number;
-  message: string;
-  body?: unknown;
-}
-
-function isErrorResponse(value: unknown): value is ErrorResponse {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "_error" in value &&
-    (value as ErrorResponse)._error === true
-  );
-}
 
 export function formatResponse(data: unknown): {
   content: Array<{ type: "text"; text: string }>;
   isError?: boolean;
 } {
-  if (isErrorResponse(data)) {
+  if (isApiError(data)) {
     const parts = [`Error: ${data.message}`];
+    if (data.request_id) {
+      parts.push(`Request ID: ${data.request_id} (quote this to Telique support)`);
+    }
     if (data.body && typeof data.body === "object") {
       parts.push(JSON.stringify(data.body, null, 2));
     } else if (data.body) {
@@ -44,12 +23,7 @@ export function formatResponse(data: unknown): {
   }
 
   const truncated = truncateArrays(data);
-  let text = JSON.stringify(truncated, null, 2);
-
-  if (anonymous && !noticeShown) {
-    text += ANONYMOUS_NOTICE;
-    noticeShown = true;
-  }
+  const text = JSON.stringify(truncated, null, 2);
 
   return {
     content: [{ type: "text", text }],

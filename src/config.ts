@@ -24,7 +24,8 @@ function loadTokenFromConfigFile(): string | null {
 }
 
 export function loadConfig(): Config {
-  // Token resolution: env var > config file > null (anonymous)
+  // Token resolution: env var > config file > null (no token; the API refuses
+  // such requests unless they come from an allowlisted IP)
   const apiToken =
     process.env.TELIQUE_API_TOKEN || loadTokenFromConfigFile() || null;
 

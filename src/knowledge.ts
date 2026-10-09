@@ -104,7 +104,7 @@ Or use \`lookup_tn\` for a quick consolidated view (dips LRN + CNAM + DNO + LERG
 - Match \`switch\` + \`sha_indicator\` from lerg_6 to find the correct tandem.
 - Or use \`lerg_tandem\` which does the join automatically.
 
-**lerg_12** — LRN registry
+**lerg12** — LRN registry
 - Fields: lrn, lata, lata_name, switch, ocn, status, eff_date
 - Which company/switch established each LRN.
 
@@ -120,12 +120,14 @@ Or use \`lookup_tn\` for a quick consolidated view (dips LRN + CNAM + DNO + LERG
 | lerg_8_pst | ZIP codes → localities (US only) |
 | lerg_9 | Homing by tandem — "top-down" view of which NPA-NXXs subtend a tandem |
 | lerg_4 | SS7 point codes |
-| lerg_10 | NPA-NXX → operator services ATC |
-| lerg_11 | Locality → operator services ATC |
-| lerg_16 | IP capability by LRN |
-| lerg_17 | IP capability by NPA-NXX |
+| lerg10 | NPA-NXX → operator services ATC |
+| lerg11 | Locality → operator services ATC |
+| lerg16 | IP capability by LRN |
+| lerg17 | IP capability by NPA-NXX |
 
 Use \`lerg_table_info\` to list all tables or get the schema for a specific one.
+
+**Table names 10 and up have no underscore after \`lerg\`:** \`lerg10\`, \`lerg11\`, \`lerg12\`, \`lerg12_ins\`, \`lerg16\`, \`lerg17\`. \`lerg_12\` returns 404 "Table not found".
 
 ---
 
@@ -456,7 +458,7 @@ The MCP tools wrap these HTTP endpoints. Use this table when calling the Telique
 | \`dno_check\` | GET | \`/v1/dno/{phone_number}\` | Add \`?format=json\` for details; default is \`true\`/\`false\` text |
 | \`lrn_relationship_query\` | GET | \`/v1/lsms/list/{resource}?{filter}={value}\` | \`resource\` ∈ {phone_number, spid, lrn}; filter ∈ {lrn, spid, phone_number}; exactly one filter |
 | \`lerg_table_info\` | GET | \`/v1/lerg/tables\` or \`/v1/lerg/tables/{table_name}\` | No args = list all tables |
-| \`lerg_query\` | GET | \`/v1/lerg/{table_name}/{fields}/{query}\` | Example: \`/lerg/lerg_6/npa,nxx,ocn/npa=303&nxx=629\` |
+| \`lerg_query\` | GET | \`/v1/lerg/{table_name}/{fields}/{query}\` | Example: \`/v1/lerg/lerg_6/npa,nxx,ocn/npa=303%26nxx=629\` — send \`&\` between filters as \`%26\` so it stays in the path segment |
 | \`lerg_complex_query\` | POST | \`/v1/lerg/query\` | JSON body with table, fields, filters, join, limit, offset |
 | \`lerg_tandem\` | GET | \`/v1/lerg/tandem?npa={npa}&nxx={nxx}\` | Pre-joined tandem lookup |
 | \`routelink_lookup\` (ror) | GET | \`/v1/ror/{crn}\` | Responsible Organization for a toll-free number |
@@ -467,7 +469,20 @@ The MCP tools wrap these HTTP endpoints. Use this table when calling the Telique
 | \`graphql_query\` (lsms) | POST | \`/v1/lsms/gql\` | JSON body \`{"query":"..."}\`; GET returns GraphiQL playground HTML |
 | \`lookup_tn\` | — | (composite) | Not a single endpoint — fans out to \`/lrn/\`, \`/cnam/\`, \`/dno/\`, \`/lerg/…\` in parallel |
 
-**Note on RouteLink paths**: there is NO \`/routelink/\` segment. The public OpenAPI spec at \`https://telique.ringer.tel/docs/api-reference\` historically listed \`/v1/telique/routelink/cpr/{crn}\` etc. — those paths return 404. The real paths are bare (\`/v1/cpr/{crn}\`) as shown above.
+**Note on RouteLink paths**: there is NO \`/routelink/\` segment. The public OpenAPI spec at \`https://telique.ringer.tel/docs/api-reference\` historically listed \`/v1/telique/routelink/cpr/{crn}\` etc. — those paths are not routed and are refused with a plain 403 (no JSON body). The real paths are bare (\`/v1/cpr/{crn}\`) as shown above.
+
+**Errors from the API gateway:** every response carries an \`x-telique-request-id\` header. A refused request gets \`{"success": false, "code": "...", "message": "...", "request_id": "..."}\`; tool errors show the request ID, which support can use to find the request.
+
+| Status | \`code\` | Meaning | What to tell the user |
+|--------|--------|---------|------------------------|
+| 403 | \`INVALID_TOKEN\` | No token, or one the API doesn't recognize | Configure a key (\`npx telique-mcp setup\`); free accounts get one |
+| 403 | \`SCOPE_DENIED\` | Token is valid but not authorized for this tool | Add the tool's scope to the key at telique.ringer.tel |
+| 403 | \`MALFORMED_PATH\` | Path has a \`.\`/\`..\` segment or an encoded \`.\`/\`/\` | Fix the input; values must not contain \`/\` |
+| 403 | \`FORBIDDEN\` | Method other than GET/POST, or no matching route | Use the paths above |
+| 429 | \`RATE_LIMITED\` | Over the key's rate limit | Wait \`Retry-After\` seconds. Free keys: 10 requests per 60 s, and going over blocks the key for the rest of the window |
+| 502/503 | \`UPSTREAM_UNAVAILABLE\` | Service behind the tool is down | Retry shortly |
+
+A 403 with no JSON body and no request ID came from the edge in front of the gateway, usually because the path isn't routed. There is no anonymous access: without a token, every tool fails with \`INVALID_TOKEN\` unless the caller's IP is allowlisted.
 
 ---
 

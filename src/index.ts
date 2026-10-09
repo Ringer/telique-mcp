@@ -29,7 +29,6 @@ if (subcommand === "setup") {
   );
   const { TeliqueClient } = await import("./client.js");
   const { loadConfig } = await import("./config.js");
-  const { setAnonymousMode } = await import("./utils/formatting.js");
   const { registerRoutelinkTools } = await import("./tools/routelink.js");
   const { registerLrnTools } = await import("./tools/lrn.js");
   const { registerCnamTools } = await import("./tools/cnam.js");
@@ -45,8 +44,6 @@ if (subcommand === "setup") {
 
   const config = loadConfig();
   const client = new TeliqueClient(config);
-
-  setAnonymousMode(client.isAnonymous);
 
   const server = new McpServer(
     {

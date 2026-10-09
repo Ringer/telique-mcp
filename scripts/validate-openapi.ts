@@ -175,7 +175,8 @@ const expectedPaths = [
   "/v1/lerg/query",
   "/v1/lerg/tandem",
   "/v1/ror/{crn}",
-  "/v1/{lookup_type}/{crn}/{ani}/{lata}",
+  "/v1/cic/{crn}/{ani}/{lata}",
+  "/v1/cicror/{crn}/{ani}/{lata}",
   "/v1/ror/{ror}/{resource_type}",
   "/v1/cpr/{crn}",
   "/v1/lsms/gql",
@@ -195,6 +196,24 @@ for (const [path, params] of Object.entries(pathParams)) {
     console.error(
       `WARNING: Path ${path} has path params in URL but no parameters defined`
     );
+  }
+}
+
+// Check that no two paths can match the same request. Router generators and
+// gateway importers that don't rank literal segments above templated ones
+// would otherwise send a request to whichever path they list first.
+const isTemplate = (segment: string) => segment.startsWith("{");
+for (let i = 0; i < paths.length; i++) {
+  for (let j = i + 1; j < paths.length; j++) {
+    const a = paths[i].split("/");
+    const b = paths[j].split("/");
+    if (
+      a.length === b.length &&
+      a.every((seg, k) => seg === b[k] || isTemplate(seg) || isTemplate(b[k]))
+    ) {
+      console.error(`ERROR: Paths overlap: ${paths[i]} and ${paths[j]}`);
+      errors++;
+    }
   }
 }
 
