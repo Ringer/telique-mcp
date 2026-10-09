@@ -10,7 +10,7 @@ Pick **one** install surface.
 
 OAuth-authenticated. Works on claude.ai, Claude Desktop, Claude Code, and Claude mobile. No local Node runtime.
 
-- **URL:** `https://mcp.telique.ringer.tel`
+- **URL:** `https://api.telique.ringer.tel/mcp`
 - Add it as a custom MCP connector in your Claude client's settings.
 
 ### npm stdio — advanced / offline
