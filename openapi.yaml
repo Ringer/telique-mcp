@@ -21,7 +21,7 @@ info:
     blocks the key for the rest of the 60-second window. Paid keys are limited to
     1,000 requests per second, and excess requests are throttled rather than blocked.
 
-    Get your API token at [telique.ringer.tel](https://telique.ringer.tel).
+    Get your API token at [app.telique.ringer.tel](https://app.telique.ringer.tel).
 
     ## Errors
 
@@ -808,7 +808,7 @@ components:
       in: header
       name: x-api-token
       description: |
-        API token for authentication. Get yours at [telique.ringer.tel](https://telique.ringer.tel).
+        API token for authentication. Get yours at [app.telique.ringer.tel](https://app.telique.ringer.tel).
         Required on every request unless it comes from an allowlisted IP address.
 
   schemas:

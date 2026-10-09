@@ -2,7 +2,7 @@
 
 Telique MCP gives AI assistants access to telecom routing data, caller ID lookups, number portability info, and LERG reference data through 14 tools.
 
-> **Before you install:** most users should use the hosted connector at `https://mcp.telique.ringer.tel` (OAuth, works on claude.ai, Claude Desktop, Claude Code, and mobile — no local Node runtime). This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the install-surface decision tree.
+> **Before you install:** most users should use the hosted connector at `https://api.telique.ringer.tel/mcp` (OAuth, works on claude.ai, Claude Desktop, Claude Code, and mobile — no local Node runtime). This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the install-surface decision tree.
 
 ## Quick Start
 
@@ -17,7 +17,7 @@ The setup wizard detects your installed MCP clients and registers automatically.
 
 - **Node.js** 18 or later
 - **npm** 7 or later
-- An API key from [telique.ringer.tel](https://telique.ringer.tel). Every account includes one, free accounts too. The API refuses requests without a key.
+- An API key from [app.telique.ringer.tel](https://app.telique.ringer.tel). Every account includes one, free accounts too. The API refuses requests without a key.
 
 ## Setup Wizard
 
@@ -31,7 +31,7 @@ $ telique-mcp setup
   Do you have an API key?
 
   [1] Yes, I have one  → Enter it
-  [2] No, I need one   → Opens telique.ringer.tel in browser
+  [2] No, I need one   → Opens app.telique.ringer.tel in browser
   [3] Skip for now     → Add a key later (tools need one to work)
 
   > 1
@@ -243,7 +243,7 @@ ChatGPT Desktop manages MCP servers through its UI, not a config file.
 
 ### Getting a key
 
-Visit [telique.ringer.tel](https://telique.ringer.tel) to create an account. All accounts include an API key.
+Visit [app.telique.ringer.tel](https://app.telique.ringer.tel) to create an account. All accounts include an API key.
 
 ### Rate limits
 
@@ -289,12 +289,12 @@ The server checks for a token in this order:
 Restart your MCP client. Most clients require a restart to pick up new MCP servers.
 
 **Getting 429 errors?**
-Your key is over its rate limit. Free keys allow 10 requests per 60 seconds and are blocked for the rest of the window once they go over. Wait the number of seconds the error gives, or upgrade at [telique.ringer.tel](https://telique.ringer.tel).
+Your key is over its rate limit. Free keys allow 10 requests per 60 seconds and are blocked for the rest of the window once they go over. Wait the number of seconds the error gives, or upgrade at [app.telique.ringer.tel](https://app.telique.ringer.tel).
 
 **Getting 403 errors?**
 The error message says which kind:
 - *API token not recognized / no API token configured* (`INVALID_TOKEN`): the key is missing, invalid or revoked. Run `telique-mcp setup` to update it.
-- *Not authorized for this tool* (`SCOPE_DENIED`): the key is valid but doesn't include this tool's scope. Add the scope to the key at [telique.ringer.tel](https://telique.ringer.tel).
+- *Not authorized for this tool* (`SCOPE_DENIED`): the key is valid but doesn't include this tool's scope. Add the scope to the key at [app.telique.ringer.tel](https://app.telique.ringer.tel).
 - *Refused the request path* (`MALFORMED_PATH`): an input value contained `/` or a `.`/`..` segment.
 
 Each error includes a request ID. Quote it when contacting support.

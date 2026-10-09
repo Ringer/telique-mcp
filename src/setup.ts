@@ -8,7 +8,7 @@ import { isApiError } from "./types.js";
 import { apiPath } from "./utils/paths.js";
 import { ICON_DARK_DATA_URI } from "./icons.js";
 
-const REGISTER_URL = "https://telique.ringer.tel/register";
+const REGISTER_URL = "https://app.telique.ringer.tel/register";
 const API_BASE_URL = "https://api.telique.ringer.tel";
 
 export async function runSetup(): Promise<void> {
@@ -31,7 +31,7 @@ export async function runSetup(): Promise<void> {
 
   console.log("  Do you have an API key?\n");
   console.log("  [1] Yes, I have one  → Enter it");
-  console.log("  [2] No, I need one   → Opens telique.ringer.tel in browser");
+  console.log("  [2] No, I need one   → Opens app.telique.ringer.tel in browser");
   console.log("  [3] Skip for now     → Add a key later (tools need one to work)");
   console.log();
 

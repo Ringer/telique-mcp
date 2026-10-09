@@ -7,7 +7,7 @@ import { apiPath } from "./utils/paths.js";
 const REQUEST_ID_HEADER = "x-telique-request-id";
 
 const KEY_HINT =
-  "Run `npx telique-mcp setup`, or set TELIQUE_API_TOKEN to a key from https://telique.ringer.tel (free accounts get one too).";
+  "Run `npx telique-mcp setup`, or set TELIQUE_API_TOKEN to a key from https://app.telique.ringer.tel (free accounts get one too).";
 
 export interface ProbeResult {
   /** True when the Telique gateway answered, whatever the status. */
@@ -200,7 +200,7 @@ export class TeliqueClient {
           ? `The API token was not recognized. Check TELIQUE_API_TOKEN, or create a new key. ${KEY_HINT}`
           : `No API token is configured, and the Telique API requires one. ${KEY_HINT}`;
       case "SCOPE_DENIED":
-        return "This API token is not authorized for this tool. Add the tool's scope to the key at https://telique.ringer.tel, or use a key that has it.";
+        return "This API token is not authorized for this tool. Add the tool's scope to the key at https://app.telique.ringer.tel, or use a key that has it.";
       case "MALFORMED_PATH":
         return "The API refused the request path: it contained a relative (`.` or `..`) or percent-encoded `.` or `/` segment. Check the input values for slashes or dots.";
       case "RATE_LIMITED":
