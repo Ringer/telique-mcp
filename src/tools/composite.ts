@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse } from "../utils/formatting.js";
 import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
+import { apiPath } from "../utils/paths.js";
 
 export function registerCompositeTools(
   server: McpServer,
@@ -24,17 +25,22 @@ export function registerCompositeTools(
 
       const [lrn, cnam, dno, lerg] = await Promise.all([
         client
-          .get(`/v1/lrn/${phone_number}`, { format: "json" })
+          .get(apiPath("lrn", phone_number), { format: "json" })
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
-          .get(`/v1/cnam/${phone_number}`)
+          .get(apiPath("cnam", phone_number))
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
-          .get(`/v1/dno/${phone_number}`, { format: "json" })
+          .get(apiPath("dno", phone_number), { format: "json" })
           .catch((err: Error) => ({ _error: true, message: err.message })),
         client
           .get(
-            `/v1/lerg/lerg_6/npa,nxx,loc_name,loc_state,lata,lata_name,ocn,switch,rc_abbre,rc_type/npa=${npa}%26nxx=${nxx}`,
+            apiPath(
+              "lerg",
+              "lerg_6",
+              "npa,nxx,loc_name,loc_state,lata,lata_name,ocn,switch,rc_abbre,rc_type",
+              `npa=${npa}%26nxx=${nxx}`
+            ),
             { limit: 5 }
           )
           .catch((err: Error) => ({ _error: true, message: err.message })),

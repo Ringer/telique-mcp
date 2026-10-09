@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse, errorResult } from "../utils/formatting.js";
 import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
+import { apiPath } from "../utils/paths.js";
 
 export function registerRoutelinkTools(
   server: McpServer,
@@ -36,20 +37,16 @@ export function registerRoutelinkTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ crn, lookup_type, ani, lata }) => {
-      if (
-        (lookup_type === "cic" || lookup_type === "cicror") &&
-        (!ani || !lata)
-      ) {
-        return errorResult(
-          "ani and lata are required for cic and cicror lookups"
-        );
-      }
-
       let path: string;
       if (lookup_type === "ror") {
-        path = `/v1/ror/${crn}`;
+        path = apiPath("ror", crn);
       } else {
-        path = `/v1/${lookup_type}/${crn}/${ani}/${lata}`;
+        if (!ani || !lata) {
+          return errorResult(
+            "ani and lata are required for cic and cicror lookups"
+          );
+        }
+        path = apiPath(lookup_type, crn, ani, lata);
       }
 
       const result = await client.get(path, { format: "json" });
@@ -85,7 +82,7 @@ export function registerRoutelinkTools(
     READ_ONLY_ANNOTATIONS,
     async ({ ror, resource_type, limit, offset }) => {
       const result = await client.get(
-        `/v1/ror/${ror}/${resource_type}`,
+        apiPath("ror", ror, resource_type),
         { format: "json", limit, offset }
       );
       return formatResponse(result);
@@ -111,7 +108,7 @@ export function registerRoutelinkTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ crn, expand }) => {
-      const result = await client.get(`/v1/cpr/${crn}`, {
+      const result = await client.get(apiPath("cpr", crn), {
         format: "json",
         expand: expand ? "true" : "false",
       });

@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse, errorResult } from "../utils/formatting.js";
 import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
+import { apiPath } from "../utils/paths.js";
 
 export function registerLrnTools(
   server: McpServer,
@@ -19,7 +20,7 @@ export function registerLrnTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
-      const result = await client.get(`/v1/lrn/${phone_number}`, {
+      const result = await client.get(apiPath("lrn", phone_number), {
         format: "json",
       });
       return formatResponse(result);
@@ -63,7 +64,7 @@ export function registerLrnTools(
       }
 
       const result = await client.get(
-        `/v1/lsms/list/${route.resource}`,
+        apiPath("lsms", "list", route.resource),
         { [route.param]: value }
       );
       return formatResponse(result);
@@ -81,7 +82,7 @@ export function registerLrnTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ phone_number }) => {
-      const result = await client.get(`/v1/dno/${phone_number}`, {
+      const result = await client.get(apiPath("dno", phone_number), {
         format: "json",
       });
       return formatResponse(result);

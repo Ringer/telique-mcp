@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse, errorResult } from "../utils/formatting.js";
 import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
+import { apiPath } from "../utils/paths.js";
 
 export function registerGraphqlTools(
   server: McpServer,
@@ -31,8 +32,8 @@ LERG (service='lerg'): Static telecom reference. Uses FilterInput with operators
     async ({ service, query, variables }) => {
       const path =
         service === "lsms"
-          ? "/v1/lsms/gql"
-          : "/v1/lerg/gql";
+          ? apiPath("lsms", "gql")
+          : apiPath("lerg", "gql");
 
       const body: Record<string, unknown> = { query };
       if (variables) body.variables = variables;

@@ -10,29 +10,18 @@ export function registerStatusTools(
 ): void {
   server.tool(
     "telique_status",
-    "Returns the Telique MCP server version, authentication mode, and API connectivity status. Use this when asked about the server version or connection status.",
+    "Returns the Telique MCP server version, whether an API token is configured, and whether the Telique API is reachable. Does not spend an API request. Use this when asked about the server version or connection status.",
     {},
     READ_ONLY_ANNOTATIONS,
     async () => {
-      let apiReachable = false;
-      try {
-        // Internal probe: /health is not in openapi.yaml and returns 403 from
-        // non-allowlisted IPs. Best-effort connectivity indicator only.
-        const result = await client.get("/health");
-        apiReachable =
-          typeof result === "object" &&
-          result !== null &&
-          !("_error" in result);
-      } catch {
-        // unreachable
-      }
+      const probe = await client.probe();
 
       return formatResponse({
         server: "telique-mcp",
         version: VERSION,
-        mode: client.isAnonymous ? "anonymous (10 ops/min)" : "authenticated",
-        api_connected: apiReachable,
-        api_base_url: "https://api.telique.ringer.tel",
+        mode: client.isAnonymous ? "no API token configured" : "API token configured",
+        api_connected: probe.reachable,
+        api_base_url: client.apiBaseUrl,
         tools_count: 14,
       });
     }

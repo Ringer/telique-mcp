@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { TeliqueClient } from "../client.js";
 import { formatResponse } from "../utils/formatting.js";
 import { READ_ONLY_ANNOTATIONS } from "../annotations.js";
+import { apiPath } from "../utils/paths.js";
 
 const LERG_TABLES = [
   "lerg_1",
@@ -25,14 +26,30 @@ const LERG_TABLES = [
   "lerg_8_pst",
   "lerg_9",
   "lerg_9_atc",
-  "lerg_10",
-  "lerg_11",
-  "lerg_12",
-  "lerg_12_ins",
-  "lerg_16",
-  "lerg_17",
+  "lerg10",
+  "lerg11",
+  "lerg12",
+  "lerg12_ins",
+  "lerg16",
+  "lerg17",
   "lergdate",
 ] as const;
+
+const LERG_FIELDS = /^(\*|[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*)$/;
+const LERG_FILTERS = /^[A-Za-z0-9_]+=[^&/]*(&[A-Za-z0-9_]+=[^&/]*)*$/;
+
+// The filters travel as one path segment. `&` between filters is sent as %26
+// so it stays in the segment; values are percent-encoded so `?`, `#` or `%`
+// in a value can't end the path early or change its meaning.
+function encodeLergFilters(query: string): string {
+  return query
+    .split("&")
+    .map((filter) => {
+      const eq = filter.indexOf("=");
+      return `${filter.slice(0, eq)}=${encodeURIComponent(filter.slice(eq + 1))}`;
+    })
+    .join("%26");
+}
 
 export function registerLergTools(
   server: McpServer,
@@ -40,10 +57,10 @@ export function registerLergTools(
 ): void {
   server.tool(
     "lerg_table_info",
-    "List all 27 LERG tables or get metadata/schema for a specific table. LERG is static telecom reference data. Key tables: lerg_1 (OCN/carrier directory), lerg_6 (NPA-NXX block assignments with switch, LATA, rate center), lerg_7 (switch details), lerg_7_sha (switch homing arrangements/tandems), lerg_12 (LRN registry).",
+    "List all 27 LERG tables or get metadata/schema for a specific table. LERG is static telecom reference data. Key tables: lerg_1 (OCN/carrier directory), lerg_6 (NPA-NXX block assignments with switch, LATA, rate center), lerg_7 (switch details), lerg_7_sha (switch homing arrangements/tandems), lerg12 (LRN registry).",
     {
       table_name: z
-        .string()
+        .enum(LERG_TABLES)
         .optional()
         .describe(
           "Specific table name (e.g. lerg_1, lerg_6, lerg_7_sha). Omit to list all tables."
@@ -53,27 +70,37 @@ export function registerLergTools(
     async ({ table_name }) => {
       if (table_name) {
         const result = await client.get(
-          `/v1/lerg/tables/${table_name}`
+          apiPath("lerg", "tables", table_name)
         );
         return formatResponse(result);
       }
-      const result = await client.get("/v1/lerg/tables");
+      const result = await client.get(apiPath("lerg", "tables"));
       return formatResponse(result);
     }
   );
 
   server.tool(
     "lerg_query",
-    "Query any LERG table by field values. Common queries: carrier by OCN (lerg_1, fields: ocn_num,ocn_name,ocn_state), NPA-NXX info (lerg_6, fields: npa,nxx,loc_name,ocn,switch,lata), switch details (lerg_7, fields: switch,ocn,aocn), LRN registry (lerg_12, fields: lrn,lata,switch,ocn). Filter format: field=value, multiple filters joined with & (e.g. npa=303&nxx=629).",
+    "Query any LERG table by field values. Common queries: carrier by OCN (lerg_1, fields: ocn_num,ocn_name,ocn_state), NPA-NXX info (lerg_6, fields: npa,nxx,loc_name,ocn,switch,lata), switch details (lerg_7, fields: switch,ocn,aocn), LRN registry (lerg12, fields: lrn,lata,switch,ocn). Filter format: field=value, multiple filters joined with & (e.g. npa=303&nxx=629).",
     {
-      table_name: z.string().describe("Table to query (e.g. lerg_1, lerg_6)"),
+      table_name: z
+        .enum(LERG_TABLES)
+        .describe("Table to query (e.g. lerg_1, lerg_6)"),
       fields: z
         .string()
+        .regex(
+          LERG_FIELDS,
+          "fields must be comma-separated field names (letters, digits, underscores), or *"
+        )
         .describe(
-          "Comma-separated field names to return (e.g. ocn_num,ocn_name,ocn_state)"
+          "Comma-separated field names to return (e.g. ocn_num,ocn_name,ocn_state), or * for all fields"
         ),
       query: z
         .string()
+        .regex(
+          LERG_FILTERS,
+          "query must be field=value filters joined with &; values may not contain / or &"
+        )
         .describe(
           "Filter in field=value format, multiple filters joined with & (e.g. ocn_state=CO or npa=303&nxx=629)"
         ),
@@ -93,10 +120,8 @@ export function registerLergTools(
     },
     READ_ONLY_ANNOTATIONS,
     async ({ table_name, fields, query, limit, offset }) => {
-      // Encode & as %26 so multi-filters stay in the path segment
-      const encodedQuery = query.replace(/&/g, "%26");
       const result = await client.get(
-        `/v1/lerg/${table_name}/${fields}/${encodedQuery}`,
+        apiPath("lerg", table_name, fields, encodeLergFilters(query)),
         { limit, offset }
       );
       return formatResponse(result);
@@ -185,7 +210,7 @@ export function registerLergTools(
       if (fields) body.fields = fields;
       if (join) body.join = join;
 
-      const result = await client.post("/v1/lerg/query", body);
+      const result = await client.post(apiPath("lerg", "query"), body);
       return formatResponse(result);
     }
   );
@@ -244,7 +269,7 @@ export function registerLergTools(
       if (tandem) params.tandem = tandem;
       if (name) params.name = name;
 
-      const result = await client.get("/v1/lerg/tandem", params);
+      const result = await client.get(apiPath("lerg", "tandem"), params);
       return formatResponse(result);
     }
   );
