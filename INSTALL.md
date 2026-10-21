@@ -196,7 +196,7 @@ Reload VS Code.
 
 ### Codex (CLI and/or Desktop)
 
-The setup wizard handles both surfaces with a single registration. Codex CLI and the Codex Desktop app on macOS share `~/.codex/config.toml`, so one `codex mcp add` covers whichever surfaces you have installed. The wizard label adapts to what it finds:
+The setup wizard handles both Codex installs with a single registration. Codex CLI and the Codex Desktop app on macOS share `~/.codex/config.toml`, so one `codex mcp add` covers whichever of them you have installed. The wizard label adapts to what it finds:
 
 - `Codex (CLI + Desktop)` when both are installed
 - `Codex CLI` when only the standalone CLI is on `PATH`
@@ -227,15 +227,7 @@ Restart Codex (or quit and relaunch the Desktop app) to pick up the new server.
 
 ### ChatGPT Desktop
 
-ChatGPT Desktop manages MCP servers through its UI, not a config file.
-
-1. Open **ChatGPT Desktop**
-2. Go to **Settings** → **Developer Mode**
-3. Add a new MCP server:
-   - **Command:** `npx`
-   - **Args:** `-y telique-mcp`
-   - **Environment variable:** `TELIQUE_API_TOKEN=your-key-here` (optional)
-4. Restart ChatGPT Desktop
+ChatGPT connects to remote MCP servers, so use the hosted connector: turn on Developer mode (**Settings → Apps & Connectors → Advanced**), then create a connector with `https://api.telique.ringer.tel/mcp` and sign in. See the [README](README.md#recommended--hosted-connector).
 
 ---
 
@@ -304,7 +296,7 @@ Ensure Node.js 18+ is installed: `node --version`
 
 ### Hosted connector
 
-**"Couldn't register" or a redirect URI error when connecting:** update your client to its latest version and try again. If it persists, open an issue with the client name and the time of the attempt.
+**"Couldn't register" or a redirect URI error when connecting:** the sign-in service refused the redirect URI your client registered. Open an issue with the client name and version, the redirect URI if the client shows it, and the time of the attempt in UTC.
 
 **Authorization fails after you click Authorize:** sign in again from the client (`/mcp` → Authenticate in Claude Code, `codex mcp login telique`, or **Connect** in the connector settings).
 
@@ -316,14 +308,18 @@ Ensure Node.js 18+ is installed: `node --version`
 npm uninstall -g telique-mcp
 ```
 
-To remove the MCP registration from your clients, run the appropriate command:
+To remove the MCP registration from your clients, run the appropriate command. The setup wizard registers the server as `telique`; the manual instructions above use `telique-local`.
 
 ```bash
 # Claude Code
-claude mcp remove -s user telique-local
+claude mcp remove -s user telique        # wizard
+claude mcp remove -s user telique-local  # manual
 
 # Codex CLI
-codex mcp remove telique-local
+codex mcp remove telique        # wizard
+codex mcp remove telique-local  # manual
 ```
 
-For Claude Desktop, Cursor, and VS Code, remove the `telique-local` entry from the respective config file. For ChatGPT Desktop, remove it through the app's Settings UI.
+For Claude Desktop, Cursor, and VS Code, remove the `telique` or `telique-local` entry from the respective config file.
+
+To remove the hosted connector, use the same `claude mcp remove -s user telique` or `codex mcp remove telique` commands, or remove the connector in the claude.ai or ChatGPT settings.

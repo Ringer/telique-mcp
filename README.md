@@ -21,7 +21,7 @@ Add the URL as a remote MCP server, then sign in with your Telique account when 
 **Claude Code**
 
 ```bash
-claude mcp add --transport http telique https://api.telique.ringer.tel/mcp
+claude mcp add -s user --transport http telique https://api.telique.ringer.tel/mcp
 ```
 
 Then run `/mcp` in Claude Code and choose **Authenticate**.
@@ -35,9 +35,11 @@ codex mcp login telique
 
 **claude.ai, Claude Desktop and Claude mobile:** add a custom connector with the URL under **Settings → Connectors**. A connector added on claude.ai also appears in Claude Desktop and mobile.
 
-**ChatGPT:** add a custom connector (app) with the URL in ChatGPT's connector settings.
+**ChatGPT:** turn on Developer mode (**Settings → Apps & Connectors → Advanced**), then create a connector with the URL. Custom connectors depend on your ChatGPT plan.
 
 To reconnect after signing out or revoking access, run the client's authenticate or login step again (`/mcp` in Claude Code, `codex mcp login telique`, or **Connect** in the claude.ai or ChatGPT connector settings).
+
+**Switching from npm stdio?** `telique-mcp setup` registers its stdio server as `telique` too. Remove it before adding the hosted connector (`claude mcp remove -s user telique`, `codex mcp remove telique`, or delete the `telique` entry from the client's JSON config) so the two surfaces don't shadow each other.
 
 `mcp.telique.ringer.tel` is retired and no longer resolves. If a client still points at it, remove that entry and add the URL above.
 
@@ -91,7 +93,9 @@ Enter your key during setup or update it later by running `telique-mcp setup` ag
 
 ## Supported Clients
 
-The setup wizard auto-detects and registers with:
+The hosted connector works with any client that supports remote MCP with OAuth (see [Install](#install)).
+
+For the npm stdio surface, the setup wizard auto-detects and registers with:
 
 - Claude Code
 - Claude Desktop
@@ -99,7 +103,6 @@ The setup wizard auto-detects and registers with:
 - GitHub Copilot (VS Code)
 - Codex CLI
 - Codex Desktop (macOS — also configured automatically when only the .app is installed; CLI and Desktop share `~/.codex/config.toml`)
-- ChatGPT Desktop (manual setup)
 
 See [INSTALL.md](INSTALL.md) for manual configuration and platform-specific paths.
 
