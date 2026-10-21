@@ -33,11 +33,13 @@ codex mcp add telique --url https://api.telique.ringer.tel/mcp
 codex mcp login telique
 ```
 
-**claude.ai, Claude Desktop and Claude mobile:** add a custom connector with the URL under **Settings → Connectors**. A connector added on claude.ai also appears in Claude Desktop and mobile.
+> **Known issue:** Codex currently refuses to start sign-in for the hosted connector (`OAuth authorization endpoint origin does not match the authorization server origin`). A server-side fix is tracked in [#13](https://github.com/Ringer/telique-mcp/issues/13). Until it ships, use the [npm stdio surface](#npm-stdio--advanced--offline) with Codex.
 
-**ChatGPT:** turn on Developer mode (**Settings → Apps & Connectors → Advanced**), then create a connector with the URL. Custom connectors depend on your ChatGPT plan.
+**claude.ai, Claude Desktop and Claude mobile:** open **Customize → Connectors**, choose **Add connector**, and add a custom connector with the URL. A connector added on claude.ai also appears in Claude Desktop and mobile.
 
-To reconnect after signing out or revoking access, run the client's authenticate or login step again (`/mcp` in Claude Code, `codex mcp login telique`, or **Connect** in the claude.ai or ChatGPT connector settings).
+**ChatGPT:** open **Plugins**, choose **Add → Add custom MCP server**, enter the URL with **OAuth** authentication, then **Continue** to sign in. Custom MCP servers depend on your ChatGPT plan and workspace settings.
+
+To reconnect after signing out or revoking access, run the client's authenticate or login step again (`/mcp` in Claude Code, `codex mcp login telique`, or **Connect** in the claude.ai connector or ChatGPT plugin settings).
 
 **Switching from npm stdio?** `telique-mcp setup` registers its stdio server as `telique` too. Remove it before adding the hosted connector (`claude mcp remove -s user telique`, `codex mcp remove telique`, or delete the `telique` entry from the client's JSON config) so the two surfaces don't shadow each other.
 

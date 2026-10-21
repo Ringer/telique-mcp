@@ -227,7 +227,7 @@ Restart Codex (or quit and relaunch the Desktop app) to pick up the new server.
 
 ### ChatGPT Desktop
 
-ChatGPT connects to remote MCP servers, so use the hosted connector: turn on Developer mode (**Settings → Apps & Connectors → Advanced**), then create a connector with `https://api.telique.ringer.tel/mcp` and sign in. See the [README](README.md#recommended--hosted-connector).
+ChatGPT connects to remote MCP servers, so use the hosted connector: open **Plugins**, choose **Add → Add custom MCP server**, enter `https://api.telique.ringer.tel/mcp` with **OAuth** authentication, and sign in. See the [README](README.md#recommended--hosted-connector).
 
 ---
 

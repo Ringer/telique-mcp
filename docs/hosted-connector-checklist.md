@@ -44,7 +44,7 @@ Do this for **Claude Code**, **Codex**, **claude.ai** and **ChatGPT**. Use a tes
 
 | Step | Pass when |
 |---|---|
-| Add the server | Claude Code: `claude mcp add -s user --transport http telique https://api.telique.ringer.tel/mcp`. Codex: `codex mcp add telique --url https://api.telique.ringer.tel/mcp`. claude.ai or ChatGPT: add a custom connector with the URL. |
+| Add the server | Claude Code: `claude mcp add -s user --transport http telique https://api.telique.ringer.tel/mcp`. Codex: `codex mcp add telique --url https://api.telique.ringer.tel/mcp`. claude.ai: **Customize → Connectors → Add connector**. ChatGPT: **Plugins → Add → Add custom MCP server** (OAuth). |
 | Discovery and registration | The client opens the authorize page with no "couldn't register" error. |
 | Browser login and consent | The authorize page shows the account, `telique:read` and the principal picker. **Authorize** returns to the client with no `error=` in the redirect. |
 | Token exchange | The client reports the server as connected or authenticated. |
