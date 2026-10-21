@@ -2,7 +2,7 @@
 
 Telique MCP gives AI assistants access to telecom routing data, caller ID lookups, number portability info, and LERG reference data through 14 tools.
 
-> **Before you install:** most users should use the hosted connector at `https://api.telique.ringer.tel/mcp` (OAuth, works on claude.ai, Claude Desktop, Claude Code, and mobile — no local Node runtime). This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the install-surface decision tree.
+> **Before you install:** most users should use the hosted connector at `https://api.telique.ringer.tel/mcp` (OAuth sign-in, no API key to copy; works with Claude, ChatGPT, Codex and other remote-MCP clients, with no local Node runtime). Per-client commands are in the [README](README.md#recommended--hosted-connector). This guide is the deep-dive for the **npm stdio** surface, intended for CI, offline use, or clients that don't support remote MCP. See [README.md](README.md) for the install-surface decision tree.
 
 ## Quick Start
 
@@ -301,6 +301,14 @@ Each error includes a request ID. Quote it when contacting support.
 
 **Server not starting?**
 Ensure Node.js 18+ is installed: `node --version`
+
+### Hosted connector
+
+**"Couldn't register" or a redirect URI error when connecting:** update your client to its latest version and try again. If it persists, open an issue with the client name and the time of the attempt.
+
+**Authorization fails after you click Authorize:** sign in again from the client (`/mcp` → Authenticate in Claude Code, `codex mcp login telique`, or **Connect** in the connector settings).
+
+**401 "Authentication required" with an API key:** the hosted connector only accepts OAuth sign-in. Remove any `Authorization` header or API key from that client entry, or use the npm stdio surface if you want to authenticate with a key.
 
 ## Uninstalling
 

@@ -6,12 +6,40 @@ Telecom data tools for AI assistants. Query LRN, CNAM, DNO, LERG routing tables,
 
 Pick **one** install surface.
 
+| Surface | Authentication | Use it for |
+|---|---|---|
+| **Hosted connector** (recommended) | OAuth sign-in in your browser; no API key to copy | Claude, ChatGPT, Codex and any other client that supports remote MCP |
+| **npm stdio** | Telique API key in `~/.telique/config.json` | CI, offline use, clients without remote MCP |
+| Direct REST/GraphQL API | Telique API key (`x-api-token`) | Your own code, not AI clients. See [telique.ringer.tel](https://telique.ringer.tel) |
+
 ### Recommended — Hosted connector
 
-OAuth-authenticated. Works on claude.ai, Claude Desktop, Claude Code, and Claude mobile. No local Node runtime.
-
 - **URL:** `https://api.telique.ringer.tel/mcp`
-- Add it as a custom MCP connector in your Claude client's settings.
+
+Add the URL as a remote MCP server, then sign in with your Telique account when the browser opens. The connector gets its own credentials for each session, so never paste a Telique API key into your AI client for this surface.
+
+**Claude Code**
+
+```bash
+claude mcp add --transport http telique https://api.telique.ringer.tel/mcp
+```
+
+Then run `/mcp` in Claude Code and choose **Authenticate**.
+
+**Codex (CLI and Desktop)**
+
+```bash
+codex mcp add telique --url https://api.telique.ringer.tel/mcp
+codex mcp login telique
+```
+
+**claude.ai, Claude Desktop and Claude mobile:** add a custom connector with the URL under **Settings → Connectors**. A connector added on claude.ai also appears in Claude Desktop and mobile.
+
+**ChatGPT:** add a custom connector (app) with the URL in ChatGPT's connector settings.
+
+To reconnect after signing out or revoking access, run the client's authenticate or login step again (`/mcp` in Claude Code, `codex mcp login telique`, or **Connect** in the claude.ai or ChatGPT connector settings).
+
+`mcp.telique.ringer.tel` is retired and no longer resolves. If a client still points at it, remove that entry and add the URL above.
 
 ### npm stdio — advanced / offline
 
@@ -57,7 +85,7 @@ Once installed, just ask your AI assistant:
 
 ## API Key
 
-An API key is required. Every account includes one, free accounts too: get yours at [app.telique.ringer.tel](https://app.telique.ringer.tel). Free-account keys allow 10 requests per 60 seconds.
+The hosted connector needs no API key; you sign in instead. The npm stdio surface and the direct API need one. Every account includes one, free accounts too: get yours at [app.telique.ringer.tel](https://app.telique.ringer.tel). Free-account keys allow 10 requests per 60 seconds.
 
 Enter your key during setup or update it later by running `telique-mcp setup` again.
 
@@ -78,5 +106,6 @@ See [INSTALL.md](INSTALL.md) for manual configuration and platform-specific path
 ## Links
 
 - [Detailed install guide](INSTALL.md)
+- [Hosted connector release checklist](docs/hosted-connector-checklist.md)
 - [GitHub](https://github.com/Ringer/telique-mcp)
 - [npm](https://www.npmjs.com/package/telique-mcp)
